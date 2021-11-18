@@ -300,7 +300,7 @@ break;
         return const_read.get();
     }
 
-    IR::OptFlagsGetSet *A64IROptResult::GetOptFlagsGetSet() {
+    IR::OptFlagsSync *A64IROptResult::GetOptFlagsGetSet() {
         return commit_a64;
     }
 

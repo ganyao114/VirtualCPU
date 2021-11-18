@@ -250,11 +250,11 @@ namespace Svm::Decoder {
         
         auto &result = sub ? __ SubValue(left, right) : __ AddValue(left, right);
         
-        __ SetFlag(IR::Flags{Carry}, __ GetCarry(result));
-        __ SetFlag(IR::Flags{Overflow}, __ GetOverFlow(result));
-        __ SetFlag(IR::Flags{Signed}, __ GetSigned(result));
-        __ SetFlag(IR::Flags{Parity}, __ GetFlag(result, IR::Flags{Parity}));
-        __ SetFlag(IR::Flags{Zero}, __ GetZero(result));
+        __ SetFlag(Carry, __ GetCarry(result));
+        __ SetFlag(Overflow, __ GetOverFlow(result));
+        __ SetFlag(Signed, __ GetSigned(result));
+        __ SetFlag(Parity, __ GetFlag(result, Parity));
+        __ SetFlag(Zero, __ GetZero(result));
         
         if (save_res) {
             Dst(insn, op0, result);
@@ -291,11 +291,11 @@ namespace Svm::Decoder {
         
         auto &result = sub ? __ SbbValue(left, right) : __ AdcValue(left, right);
         
-        __ SetFlag(IR::Flags{Carry}, __ GetCarry(result));
-        __ SetFlag(IR::Flags{Overflow}, __ GetOverFlow(result));
-        __ SetFlag(IR::Flags{Signed}, __ GetSigned(result));
-        __ SetFlag(IR::Flags{Parity}, __ GetFlag(result, IR::Flags{Parity}));
-        __ SetFlag(IR::Flags{Zero}, __ GetZero(result));
+        __ SetFlag(Carry, __ GetCarry(result));
+        __ SetFlag(Overflow, __ GetOverFlow(result));
+        __ SetFlag(Signed, __ GetSigned(result));
+        __ SetFlag(Parity, __ GetFlag(result, Parity));
+        __ SetFlag(Zero, __ GetZero(result));
         
         Dst(insn, op0, result);
     }
@@ -305,10 +305,10 @@ namespace Svm::Decoder {
         auto src = Src(insn, op0);
         auto &result = dec ? __ SubImm(src, (u8)1) : __ AddImm(src, (u8)1);
         
-        __ SetFlag(IR::Flags{Overflow}, __ GetOverFlow(result));
-        __ SetFlag(IR::Flags{Signed}, __ GetSigned(result));
-        __ SetFlag(IR::Flags{Parity}, __ GetFlag(result, IR::Flags{Parity}));
-        __ SetFlag(IR::Flags{Zero}, __ GetZero(result));
+        __ SetFlag(Overflow, __ GetOverFlow(result));
+        __ SetFlag(Signed, __ GetSigned(result));
+        __ SetFlag(Parity, __ GetFlag(result, Parity));
+        __ SetFlag(Zero, __ GetZero(result));
         
         Dst(insn, op0, result);
     }
@@ -318,7 +318,7 @@ namespace Svm::Decoder {
         auto left = Src(insn, op0);
         auto right = R(div ? _RegisterType::R_RAX : _RegisterType::R_RAX);
 
-        __ ClearFlags(IR::Flags{FlagAll});
+        __ ClearFlags(FlagAll);
     }
 
     void X64Decoder::DecodeLea(_DInst &insn) {

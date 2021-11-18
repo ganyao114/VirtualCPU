@@ -36,6 +36,9 @@ int main(int argc, char *argv[]) {
     masm.movq(Register::R8, Immediate(rw_addr));
     masm.movl(Register::RAX, Address(Register::R8, 0x10));
     masm.subq(Register::R10, Immediate(1));
+    masm.subq(Register::R10, Immediate(1));
+    masm.subq(Register::R10, Immediate(1));
+    masm.subq(Register::R10, Immediate(1));
     masm.jmp(&l2);
     masm.Bind(&l1);
     masm.int3();

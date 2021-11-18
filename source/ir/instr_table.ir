@@ -42,6 +42,7 @@ INST2(MulValue, Value, Value, Value)
 INST2(DivImm, Value, Value, Imm)
 INST2(DivValue, Value, Value, Value)
 INST2(ZeroExtend, Value, Value, Size)
+INST2(SignExtend, Value, Value, Size)
 // And & Or
 INST2(AndImm, Value, Value, Imm)
 INST2(OrImm, Value, Value, Imm)

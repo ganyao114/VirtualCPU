@@ -49,23 +49,23 @@ namespace Svm::A64 {
     }
 
     bool IRCommitA64::CanSyncFlagSet(IR::Flags &flag, IR::Instruction *instr_flag_from) {
-        return OptFlagsGetSet::CanSyncFlagSet(flag, instr_flag_from);
+        return OptFlagsSync::CanSyncFlagSet(flag, instr_flag_from);
     }
 
     bool IRCommitA64::CanSyncFlagGet(IR::Flags &flag, IR::Instruction *instr_flag_consume) {
-        return OptFlagsGetSet::CanSyncFlagGet(flag, instr_flag_consume);
+        return OptFlagsSync::CanSyncFlagGet(flag, instr_flag_consume);
     }
 
     void IRCommitA64::SyncFlagSet(IR::Instruction *instr_flag_from, IR::Flags &flag) {
-        OptFlagsGetSet::SyncFlagSet(instr_flag_from, flag);
+        OptFlagsSync::SyncFlagSet(instr_flag_from, flag);
     }
 
     void IRCommitA64::SyncFlagGet(IR::Instruction *instr_flag_consume, IR::Flags &flag) {
-        OptFlagsGetSet::SyncFlagGet(instr_flag_consume, flag);
+        OptFlagsSync::SyncFlagGet(instr_flag_consume, flag);
     }
 
     void IRCommitA64::FlagsCanNotSync(IR::Flags &flag) {
-        OptFlagsGetSet::FlagsCanNotSync(flag);
+        OptFlagsSync::FlagsCanNotSync(flag);
     }
 
 }

@@ -53,23 +53,23 @@ namespace Svm::IR {
         return Svm::Vector<u8>();
     }
 
-    bool OptFlagsGetSet::CanSyncFlagSet(Flags &flag, Instruction *instr_flag_from) {
+    bool OptFlagsSync::CanSyncFlagSet(Flags &flag, Instruction *instr_flag_from) {
         return false;
     }
 
-    bool OptFlagsGetSet::CanSyncFlagGet(Flags &flag, Instruction *instr_flag_consume) {
+    bool OptFlagsSync::CanSyncFlagGet(Flags &flag, Instruction *instr_flag_consume) {
         return false;
     }
 
-    void OptFlagsGetSet::SyncFlagSet(Instruction *instr_flag_from, Flags &flag) {
+    void OptFlagsSync::SyncFlagSet(Instruction *instr_flag_from, Flags &flag) {
 
     }
 
-    void OptFlagsGetSet::SyncFlagGet(Instruction *instr_flag_consume, Flags &flag) {
+    void OptFlagsSync::SyncFlagGet(Instruction *instr_flag_consume, Flags &flag) {
 
     }
 
-    void OptFlagsGetSet::FlagsCanNotSync(Flags &flag) {
+    void OptFlagsSync::FlagsCanNotSync(Flags &flag) {
 
     }
 
@@ -93,7 +93,7 @@ namespace Svm::IR {
         return nullptr;
     }
 
-    OptFlagsGetSet *OptResult::GetOptFlagsGetSet() {
+    OptFlagsSync *OptResult::GetOptFlagsGetSet() {
         return nullptr;
     }
 

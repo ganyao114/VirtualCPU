@@ -9,6 +9,7 @@
 #include "ctx_get_set_elimination.h"
 #include "value_expr_fold.h"
 #include "register_alloc_pass.h"
+#include "flags_set_elimination.h"
 
 namespace Svm::IR {
 
@@ -17,6 +18,7 @@ namespace Svm::IR {
                 MakeShared<ConstMemoryReadOpt>(),
                 MakeShared<ConstFoldingOpt>(),
                 MakeShared<ConstMemoryReadOpt>(),
+                MakeShared<FlagsSetOpt>(),
                 MakeShared<DeadCodeRemoveOpt>(),
                 MakeShared<CtxGetSetElimination>(),
                 MakeShared<ValueExprFoldOpt>(),

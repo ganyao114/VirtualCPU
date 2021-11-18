@@ -14,7 +14,7 @@ namespace Svm::A64 {
 
     class A64IROptResult;
 
-    class IRCommitA64 : public IR::OptValueFold, public IR::OptFlagsGetSet {
+    class IRCommitA64 : public IR::OptValueFold, public IR::OptFlagsSync {
     public:
 
         explicit IRCommitA64(IR::IRBlock *block, A64JitContext *context);
@@ -104,7 +104,7 @@ private:
 
         IR::OptConstRead *GetOptConstRead() override;
 
-        IR::OptFlagsGetSet *GetOptFlagsGetSet() override;
+        IR::OptFlagsSync *GetOptFlagsGetSet() override;
 
         IR::RegAllocPass *GetRegAllocPass() override;
 

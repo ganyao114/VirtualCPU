@@ -43,7 +43,8 @@ set(SOURCES
         ir_opt/const_memory_read_pass.cc
         ir_opt/const_folding_pass.cc
         ir_opt/register_alloc_pass.cc
-        ir_opt/flags_get_set_elimination.cc
+        ir_opt/flags_get_set_sync.cc
+        ir_opt/flags_set_elimination.cc
         platform/memory.cc
         platform/unix_file.cc
         runtime/jit_runtime.cc

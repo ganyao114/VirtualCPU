@@ -183,7 +183,7 @@ namespace Svm::IR {
 
     struct Flags {
 
-        enum FlagValue : u32 {
+        enum FlagValue : u16 {
             Carry       = 1 << 0,
             Overflow    = 1 << 1,
             Signed      = 1 << 2,
@@ -191,7 +191,11 @@ namespace Svm::IR {
             FlagAll     = Carry | Overflow | Signed | Zero
         };
 
-        u32 index{};
+        explicit Flags() : flag() {}
+
+        constexpr Flags(u32 value) : flag(value) {}
+
+        u32 flag;
     };
 
     struct Address {

@@ -2,7 +2,7 @@
 // Created by swift on 1/11/21.
 //
 
-#include "flags_get_set_elimination.h"
+#include "flags_get_set_sync.h"
 
 // Sync some flags between guest and host
 //
@@ -12,7 +12,7 @@
 
 namespace Svm::IR {
 
-    void FlagsGetSetOpt::Optimize(IRBlock *block, OptResult *result) {
+    void FlagsSyncOpt::Optimize(IRBlock *block, OptResult *result) {
         auto &instr_seq = block->Sequence();
         auto opt = result->GetOptFlagsGetSet();
         IR::Flags flags_not_all_sync_set{};
@@ -47,7 +47,7 @@ namespace Svm::IR {
                         }
                         result->Disable(instr->GetId());
                     } else {
-                        flags_not_all_sync_set.index |= flag.index;
+                        flags_not_all_sync_set.flag |= flag.flag;
                     }
                 }
             }

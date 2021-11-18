@@ -401,6 +401,10 @@ break;
 
     }
 
+    void Interpreter::SignExtend(IR::Value &a1, IR::Size &a2) {
+
+    }
+
     void Interpreter::Terminal() {
         switch (ir_block->GetTermType()) {
             case IR::IRBlock::DIRECT: {

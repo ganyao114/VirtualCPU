@@ -1,15 +1,13 @@
 //
-// Created by swift on 1/11/21.
+// Created by swift on 2021/8/30.
 //
-
-#pragma once
 
 #include "optimize.h"
 #include "ir_opt_result.h"
 
 namespace Svm::IR {
 
-    class FlagsGetSetOpt : public IROptimize {
+    class FlagsSetOpt : public IROptimize {
     public:
 
         void Optimize(IRBlock *block, OptResult *result) override;

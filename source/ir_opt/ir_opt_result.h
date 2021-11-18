@@ -70,7 +70,7 @@ namespace Svm::IR {
 
     };
 
-    class OptFlagsGetSet : public BaseObject, CopyDisable {
+    class OptFlagsSync : public BaseObject, CopyDisable {
     public:
 
         virtual bool CanSyncFlagSet(IR::Flags &flag, Instruction *instr_flag_from);
@@ -119,7 +119,7 @@ namespace Svm::IR {
 
         virtual OptConstRead *GetOptConstRead();
 
-        virtual OptFlagsGetSet *GetOptFlagsGetSet();
+        virtual OptFlagsSync *GetOptFlagsGetSet();
 
         virtual RegAllocPass *GetRegAllocPass();
 

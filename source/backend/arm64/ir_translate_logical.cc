@@ -272,4 +272,8 @@ namespace Svm::A64 {
         __ Bfi(return_reg, val_reg, lsb.Value<u8>(), len.Value<u8>());
     }
 
+    void IRCommitA64::SignExtend(IR::Value &a1, IR::Size &a2) {
+
+    }
+
 }
