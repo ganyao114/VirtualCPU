@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <utility>
+#include <memory>
 
 #ifdef STUPIDLY_STD_COMPLIANT
 #  include <iterator>
