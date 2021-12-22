@@ -22,12 +22,15 @@ namespace Svm::IR {
                 case OpCode::SubImm:
                 case OpCode::SbbImm:
                 case OpCode::DivImm:
-                case OpCode::OrImm:
+                case OpCode::OrImm: {
                     auto &val = instr->GetParam<Value>(0);
                     auto &val_from = block->Instr(val.GetId());
                     if (val_from.GetOpCode() == OpCode::LoadImm) {
 
                     }
+                    break;
+                }
+                default:
                     break;
             }
         }

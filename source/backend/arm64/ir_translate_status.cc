@@ -48,6 +48,10 @@ namespace Svm::A64 {
 
     }
 
+    void IRCommitA64::XorValue(IR::Value &a1, IR::Value &a2) {
+
+    }
+
     bool IRCommitA64::CanSyncFlagSet(IR::Flags &flag, IR::Instruction *instr_flag_from) {
         return OptFlagsSync::CanSyncFlagSet(flag, instr_flag_from);
     }

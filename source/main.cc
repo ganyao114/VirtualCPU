@@ -25,6 +25,25 @@ struct CacheEntry {
     size_t size;
 };
 
+class MyVCpu : public Svm::VCpu {
+public:
+    MyVCpu(Svm::SvmInstance *instance) : VCpu(instance) {}
+
+    void CallSvc(Svm::u32 num) override {
+        printf("CallSvc: %d \n", num);
+    }
+
+    void CallBrk(Svm::u32 num) override {
+        printf("CallBrk: %d \n", num);
+        AdvancePC(1);
+        MakeInterFastReturn();
+    }
+
+    void Yield() override {
+        printf("Yield \n");
+    }
+};
+
 int main(int argc, char *argv[]) {
     X86_64Assembler masm{};
     auto rw_addr = 0x8000000;
@@ -45,17 +64,16 @@ int main(int argc, char *argv[]) {
     masm.subl(Register::R8, Address(Register::R9, 100));
     masm.cmov(Condition::kParityEven, Register::R8, Register::R10);
     masm.jmp(&l1);
-    masm.int3();
     masm.ret();
 
     masm.FinalizeCode();
-    Svm::VAddr pc = (Svm::VAddr)masm.CodeBufferBaseAddress();
+    auto pc = (Svm::VAddr)masm.CodeBufferBaseAddress();
 
-    printf("OFFSET_V: %d \n", OFFSET_OF(ThreadContext64, xmms));
-    printf("OFFSET_XF: %d \n", OFFSET_OF(ThreadContext64, flags));
-    printf("OFFSET_PT: %d \n", OFF_HELP(page_table));
-    printf("OFFSET_NZCV: %d \n", OFF_HELP(cpu_flags));
-    printf("OFFSET_CODE_CACHE: %d \n", OFF_HELP(code_cache));
+    printf("OFFSET_V: %lu \n", OFFSET_OF(ThreadContext64, xmms));
+    printf("OFFSET_XF: %lu \n", OFFSET_OF(ThreadContext64, flags));
+    printf("OFFSET_PT: %lu \n", OFF_HELP(page_table));
+    printf("OFFSET_NZCV: %lu \n", OFF_HELP(cpu_flags));
+    printf("OFFSET_CODE_CACHE: %lu \n", OFF_HELP(code_cache));
 
 
     //auto res = Svm::BuildFunction(pc, nullptr);
@@ -68,6 +86,7 @@ int main(int argc, char *argv[]) {
 
     configs.guest_arch = Svm::CpuArch::X64;
     configs.jit_threads = 2;
+    configs.use_soft_mmu = true;
     configs.use_offset_pt = false;
     configs.page_fatal = true;
     configs.check_halt = true;
@@ -85,32 +104,49 @@ int main(int argc, char *argv[]) {
     page_table[0x800000 >> 12] = {(Svm::PAddr)test_code_page, Svm::PageEntry::Read};
     page_table[rw_addr >> 12] = {(Svm::PAddr)test_rw_page, Svm::PageEntry::Read};
 
+    MyVCpu core1{&instance};
+    MyVCpu core2{&instance};
+    MyVCpu core3{&instance};
+    MyVCpu core4{&instance};
+
     auto t1 = std::thread([&]() {
-        Svm::VCpu current_core{&instance};
-        current_core.SetPC(0x800000);
-        current_core.Run();
+        core1.SetPC(0x800000);
+        while (true) {
+            core1.ClearInterrupt();
+            core1.Run();
+        }
     });
 
     auto t2 = std::thread([&]() {
-        Svm::VCpu current_core{&instance};
-        current_core.SetPC(0x800000);
-        current_core.Run();
+        core2.SetPC(0x800000);
+        while (true) {
+            core2.ClearInterrupt();
+            core2.Run();
+        }
     });
 
     auto t3 = std::thread([&]() {
-        Svm::VCpu current_core{&instance};
-        current_core.SetPC(0x800000);
-        current_core.Run();
+        core3.SetPC(0x800000);
+        while (true) {
+            core3.ClearInterrupt();
+            core3.Run();
+        }
     });
 
     auto t4 = std::thread([&]() {
-        Svm::VCpu current_core{&instance};
-        current_core.SetPC(0x800000);
-        current_core.Run();
+        core4.SetPC(0x800000);
+        while (true) {
+            core4.ClearInterrupt();
+            core4.Run();
+        }
     });
 
     while (true) {
-        sleep(1);
+        sleep(3);
+        core1.Halt();
+        core2.Halt();
+        core3.Halt();
+        core4.Halt();
     }
 
     return 1;

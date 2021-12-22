@@ -44,7 +44,7 @@ namespace Svm::A64 {
         auto &return_reg = R(current->GetReturn().Get<IR::Value>());
         address = R(va.ValueAddress());
         auto &pa = RTemp();
-        context->VALookup(pa, address, Memory::PageEntry::Read | Memory::PageEntry::Write);
+        context->VALookup(address, Memory::PageEntry::Read | Memory::PageEntry::Write, pa);
         context->CompareAndSwap(pa, exp_reg, update_reg, update.SizeByte());
         __ Mov(return_reg, exp_reg);
         Release(pa);

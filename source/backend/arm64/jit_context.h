@@ -22,6 +22,7 @@
 namespace Svm::A64 {
 
     using namespace vixl::aarch64;
+    class A64JitContext;
 
     class VirtualAddress final {
     public:
@@ -85,6 +86,29 @@ namespace Svm::A64 {
         VAddr pc{};
     };
 
+    class ScopeMemOperand {
+    public:
+
+        explicit ScopeMemOperand(A64JitContext *context);
+
+        void Set(const MemOperand &operand);
+
+        MemOperand Get();
+
+        const Register &AcquireTmpX();
+
+        virtual ~ScopeMemOperand();
+
+        ScopeMemOperand(const ScopeMemOperand &old);
+
+        ScopeMemOperand &operator=(const ScopeMemOperand &old);
+
+    private:
+        A64JitContext *context;
+        MemOperand operand;
+        mutable List<Register> tmps;
+    };
+
     class A64JitContext : public BaseObject, CopyDisable, std::enable_shared_from_this<A64JitContext> {
     public:
 
@@ -125,7 +149,7 @@ namespace Svm::A64 {
 
         void MemBarrier();
 
-        void VALookup(const Register &pa, VirtualAddress va, u8 perms);
+        ScopeMemOperand VALookup(VirtualAddress va, u8 perms, const Register &pa = NoReg);
 
         void CheckPageOverflow(VirtualAddress &va, const CPURegister &rt, u8 action, bool atomic);
 

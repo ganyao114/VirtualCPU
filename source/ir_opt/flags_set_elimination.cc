@@ -27,6 +27,13 @@ namespace Svm::IR {
             } else if (instr->GetOpCode() == OpCode::GetFlag) {
                 auto flag = instr->GetParam<Flags>(1).flag;
                 append_flag_gets(flag, instr->GetId());
+            } else if (instr->GetOpCode() == OpCode::ClearFlags) {
+                auto flags = instr->GetParam<Flags>(0).flag;
+                for (int i = 0; i < sizeof(Flags::FlagValue) * 8; ++i) {
+                    if ((flags >> i) & 1) {
+                        append_flag_sets(Flags::FlagValue(1) << i, instr->GetId());
+                    }
+                }
             }
         }
 
@@ -56,7 +63,17 @@ namespace Svm::IR {
             }
             // now remove useless set inst
             for (auto set_inst_id : set_positions) {
-                result->Disable(set_inst_id);
+                auto &instr = block->Instr(set_inst_id);
+                if (instr.GetOpCode() == OpCode::ClearFlags) {
+                    auto &flags = instr.GetParam<Flags>(0).flag;
+                    // clear flag
+                    flags &= ~flag;
+                    if (flags) {
+                        result->Disable(set_inst_id);
+                    }
+                } else {
+                    result->Disable(set_inst_id);
+                }
             }
         }
     }

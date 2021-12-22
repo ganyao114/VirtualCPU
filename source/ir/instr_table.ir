@@ -48,6 +48,7 @@ INST2(AndImm, Value, Value, Imm)
 INST2(OrImm, Value, Value, Imm)
 INST2(AndValue, Value, Value, Value)
 INST2(OrValue, Value, Value, Value)
+INST2(XorValue, Value, Value, Value)
 // Get flag from result
 INST1(GetCarry, Value, Value)
 INST1(GetOverFlow, Value, Value)

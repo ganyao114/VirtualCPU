@@ -13,11 +13,11 @@
 #include <stack>
 #include <unordered_map>
 
+namespace Svm {
+
 #define OFFSET_OF(t, d) __builtin_offsetof(t, d)
 #define FORCE_INLINE inline __attribute__((always_inline))
 #define ALWAYS_INLINE  __attribute__ ((always_inline))
-
-namespace Svm {
 
     constexpr auto kBitsPerByteLog2 = 3;
     constexpr auto kBitsPerByte = 1 << 3;

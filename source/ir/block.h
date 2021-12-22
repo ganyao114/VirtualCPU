@@ -24,8 +24,8 @@ namespace Svm::IR {
 
     struct CheckBool {
         CheckBool() = default;
-        CheckBool(Value bool_value, Address then, Address else_) : bool_value(bool_value), then_(std::move(then)),
-                                                         else_(std::move(else_)) {}
+        CheckBool(Value bool_value, Address then, Address else_) : bool_value(bool_value), then_(then),
+                                                         else_(else_) {}
         Value bool_value;
         Address then_;
         Address else_;
@@ -37,8 +37,6 @@ namespace Svm::IR {
             ILL_CODE,
             PAGE_FATAL
         };
-
-        DeadEnd() = default;
 
         DeadEnd(Type type, const Imm &addr) : type(type), dead_addr(addr) {}
 

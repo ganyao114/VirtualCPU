@@ -13,6 +13,8 @@ namespace Svm {
     class VCpu : CopyDisable {
     public:
 
+        VCpu() = delete;
+
         explicit VCpu(SvmInstance *instance);
 
         virtual ~VCpu();
@@ -81,6 +83,10 @@ namespace Svm {
             auto res = interrupt_fast_ret.load();
             interrupt_fast_ret = false;
             return res;
+        }
+
+        constexpr void AdvancePC(VAddr add_pc) {
+            SetPC(GetPC() + add_pc);
         }
 
     private:

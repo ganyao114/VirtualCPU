@@ -273,6 +273,10 @@ namespace Svm::Decoder {
 
         void DecodeCondMov(_DInst &insn, IR::Cond cond);
 
+        void DecodeOr(_DInst &insn);
+
+        void DecodeXor(_DInst &insn);
+
         VAddr start;
         VAddr pc;
         IR::Assembler *visitor;

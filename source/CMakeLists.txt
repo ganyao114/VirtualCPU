@@ -2,17 +2,18 @@ cmake_minimum_required(VERSION 3.4.1)
 project(svm)
 ENABLE_LANGUAGE(ASM)
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-narrowing -std=c++17")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS ON)
 
-include_directories(.)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(externals)
 
 add_subdirectory(externals/distorm)
-include_directories(externals/distorm)
+target_include_directories(distorm INTERFACE externals/distorm)
 
 add_subdirectory(externals/vixl)
-include_directories(externals/vixl)
+target_include_directories(vixl INTERFACE externals/vixl)
 
 option(BUILD_CMD "Build Command line" ON)
 
@@ -92,8 +93,8 @@ elseif (BUILD_CMD)
 else()
 endif ()
 
-target_link_libraries(svm distorm)
-target_link_libraries(svm vixl)
+target_link_libraries(svm PRIVATE distorm)
+target_link_libraries(svm PRIVATE vixl)
 
 if (ANDROID)
     target_link_libraries(svm android log)

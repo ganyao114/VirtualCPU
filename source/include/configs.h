@@ -9,6 +9,7 @@ namespace Svm {
     struct UserConfigs {
         CpuArch guest_arch{CpuArch::Ukn};
         bool use_offset_pt{};
+        bool use_soft_mmu{};
         bool page_fatal{};
         bool page_align_check{};
         bool check_halt{};

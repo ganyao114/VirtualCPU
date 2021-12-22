@@ -385,6 +385,10 @@ break;
 
     }
 
+    void Interpreter::XorValue(IR::Value &a1, IR::Value &a2) {
+
+    }
+
     void Interpreter::DivImm(IR::Value &a1, IR::Imm &a2) {
 
     }

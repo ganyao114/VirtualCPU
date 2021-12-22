@@ -227,6 +227,12 @@ namespace Svm::Decoder {
             case I_DIV:
                 DecodeMulDiv(insn, true);
                 break;
+            case I_OR:
+                DecodeOr(insn);
+                break;
+            case I_XOR:
+                DecodeXor(insn);
+                break;
             default:
                 return false;
         }
@@ -525,6 +531,36 @@ namespace Svm::Decoder {
         IR::Address address = R(sp);
         __ WriteMemory(R(sp), value);
         R(sp, __ SubImm(R(sp), (u8)size_byte));
+    }
+
+    void X64Decoder::DecodeOr(_DInst &insn) {
+        auto &op0 = insn.ops[0];
+        auto &op1 = insn.ops[1];
+
+        auto left = Src(insn, op0);
+        auto right = Src(insn, op1);
+
+        auto result = __ OrValue(left, right);
+        __ ClearFlags(Carry | Overflow | FlagAF);
+        __ SetFlag(Signed, __ GetSigned(result));
+        __ SetFlag(Parity, __ GetFlag(result, Parity));
+        __ SetFlag(Zero, __ GetZero(result));
+        Dst(insn, op0, result);
+    }
+
+    void X64Decoder::DecodeXor(_DInst &insn) {
+        auto &op0 = insn.ops[0];
+        auto &op1 = insn.ops[1];
+
+        auto left = Src(insn, op0);
+        auto right = Src(insn, op1);
+
+        auto result = __ XorValue(left, right);
+        __ ClearFlags(Carry | Overflow | FlagAF);
+        __ SetFlag(Signed, __ GetSigned(result));
+        __ SetFlag(Parity, __ GetFlag(result, Parity));
+        __ SetFlag(Zero, __ GetZero(result));
+        Dst(insn, op0, result);
     }
 
 }

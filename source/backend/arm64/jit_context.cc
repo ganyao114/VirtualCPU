@@ -296,87 +296,70 @@ namespace Svm::A64 {
     }
 
     void A64JitContext::ReadMemory(const CPURegister &rt, VirtualAddress va, bool atomic) {
-        auto mmu_on = page_const;
-        if (!mmu_on) {
-            Register address{};
-            if (va.Const()) {
-                address = reg_mng.IP();
-                __ Mov(address, va.Address());
-            } else {
-                address = va.Reg();
-            }
-            Load(rt, MemOperand(address), va.SizeInByte());
-            return;
-        }
-        // fake mmu
-        if (configs->use_offset_pt) {
-            if (va.Const()) {
-                auto &tmp = reg_mng.IP();
-                __ Mov(tmp, va.Address());
-                Load(rt, MemOperand(reg_mng.PageTale(), tmp), va.SizeInByte());
-            } else {
-                Load(rt, MemOperand(reg_mng.PageTale(), va.Address()), va.SizeInByte());
-            }
-            return;
-        }
         CheckPageOverflow(va, rt, Memory::PageEntry::Read, atomic);
-        auto &pa = reg_mng.AcquireTmpX();
-        VALookup(pa, va, Memory::PageEntry::Read);
-        Load(rt, MemOperand(pa), va.SizeInByte());
-        reg_mng.ReleaseTmpX(pa);
+        auto pa = VALookup(va, Memory::PageEntry::Read);
+        Load(rt, pa.Get(), va.SizeInByte());
     }
 
     void A64JitContext::WriteMemory(const CPURegister &rt, VirtualAddress va, bool atomic) {
-        auto mmu_on = page_const;
-        if (!mmu_on) {
-            Register address{};
-            if (va.Const()) {
-                address = reg_mng.IP();
-                __ Mov(address, va.Address());
-            } else {
-                address = va.Reg();
-            }
-            Store(rt, MemOperand(address), va.SizeInByte());
-            return;
-        }
-        // fake mmu
-        if (configs->use_offset_pt) {
-            if (va.Const()) {
-                auto &tmp = reg_mng.IP();
-                __ Mov(tmp, va.Address());
-                Store(rt, MemOperand(reg_mng.PageTale(), tmp), va.SizeInByte());
-            } else {
-                Store(rt, MemOperand(reg_mng.PageTale(), va.Address()), va.SizeInByte());
-            }
-            return;
-        }
         CheckPageOverflow(va, rt, Memory::PageEntry::Write, atomic);
-        auto &pa = reg_mng.AcquireTmpX();
-        VALookup(pa, va, Memory::PageEntry::Write);
-        Store(rt, MemOperand(pa), va.SizeInByte());
-        reg_mng.ReleaseTmpX(pa);
+        auto pa = VALookup(va, Memory::PageEntry::Write);
+        Store(rt, pa.Get(), va.SizeInByte());
     }
 
     void A64JitContext::MemBarrier() {
         __ Dmb(FullSystem, BarrierAll);
     }
 
-    void A64JitContext::VALookup(const Register &pa, VirtualAddress va, u8 perms) {
+    ScopeMemOperand A64JitContext::VALookup(VirtualAddress va, u8 perms, const Register &pa_in) {
 
         auto &ctx = reg_mng.Context();
         auto &pt = reg_mng.PageTale();
         auto &ip = reg_mng.IP();
 
+        ScopeMemOperand result{this};
+        auto ret_operand = pa_in == NoReg;
+
         // fake mmu
         if (configs->use_offset_pt) {
             if (va.Const()) {
+                auto pa = ret_operand ? result.AcquireTmpX() : pa_in;
                 __ Mov(pa, va.Address() + reinterpret_cast<VAddr>(configs->offset_pt_base));
+                result.Set(MemOperand{pa});
+                return result;
             } else {
-                __ Add(pa, pt, va.Reg());
+                if (!ret_operand) {
+                    auto pa = result.AcquireTmpX();
+                    __ Add(pa, pt, va.Reg());
+                    result.Set(MemOperand(pa));
+                } else {
+                    result.Set({pt, va.Reg()});
+                }
+                return result;
             }
-            return;
         }
 
+        // no mmu, use vaddr directly
+        if (!configs->use_soft_mmu) {
+            if (va.Const()) {
+                auto pa = ret_operand ? result.AcquireTmpX() : pa_in;
+                __ Mov(pa, va.Address());
+                result.Set(MemOperand{pa});
+                return result;
+            } else {
+                if (!ret_operand) {
+                    auto pa = result.AcquireTmpX();
+                    __ Mov(pa, va.Reg());
+                    result.Set(MemOperand(pa));
+                } else {
+                    result.Set(MemOperand(va.Reg()));
+                }
+                return result;
+            }
+        }
+
+        // soft mmu
+        auto pa = ret_operand ? result.AcquireTmpX() : pa_in;
         if (va.Const()) {
             __ Mov(pa, va.Address() >> page_const->page_bits);
             __ Ldr(pa, MemOperand(pt, pa, LSL, 3));
@@ -405,6 +388,9 @@ namespace Svm::A64 {
         } else {
             __ Bfi(pa, va.Reg(), 0, page_const->page_bits);
         }
+
+        result.Set(MemOperand(pa));
+        return result;
     }
 
     void A64JitContext::CheckPageOverflow(VirtualAddress &va, const CPURegister &rt, u8 action, bool atomic) {
@@ -413,7 +399,7 @@ namespace Svm::A64 {
         auto &ip = reg_mng.IP();
 
         // check page align
-        if (!configs->use_offset_pt && configs->page_align_check && !atomic && va.CheckAlign()) {
+        if (configs->use_soft_mmu && configs->page_align_check && !atomic && va.CheckAlign()) {
             if (va.Const()) {
                 // page overflow
                 if ((va.Address() & page_const->page_mask) + va.SizeInByte() > page_const->page_size) {
@@ -698,6 +684,43 @@ namespace Svm::A64 {
 
     void A64JitContext::TickPC(VAddr pc_) {
         this->pc = pc_;
+    }
+
+    ScopeMemOperand::ScopeMemOperand(A64JitContext *context) : context(context) {}
+
+    ScopeMemOperand::~ScopeMemOperand() {
+        for (auto &tmp : tmps) {
+            context->RegMng().ReleaseTmpX(tmp);
+        }
+    }
+
+    void ScopeMemOperand::Set(const MemOperand &op) {
+        operand = op;
+    }
+
+    MemOperand ScopeMemOperand::Get() {
+        return operand;
+    }
+
+    ScopeMemOperand::ScopeMemOperand(const ScopeMemOperand &old) {
+        this->context = old.context;
+        this->operand = old.operand;
+        this->tmps = old.tmps;
+        old.tmps.clear();
+    }
+
+    ScopeMemOperand &ScopeMemOperand::operator=(const ScopeMemOperand &old) {
+        this->context = old.context;
+        this->operand = old.operand;
+        this->tmps = old.tmps;
+        old.tmps.clear();
+        return *this;
+    }
+
+    const Register &ScopeMemOperand::AcquireTmpX() {
+        const auto &x = context->RegMng().AcquireTmpX();
+        tmps.emplace_back(x);
+        return x;
     }
 }
 
