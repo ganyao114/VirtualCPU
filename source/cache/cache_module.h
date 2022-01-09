@@ -51,11 +51,11 @@ namespace Svm::Cache {
 
         void ClearBufferIndex(u32 index);
 
-        constexpr u16 GetModuleId() {
+        constexpr u16 GetModuleId() const {
             return id;
         }
 
-        constexpr bool Overlap(VAddr va) {
+        constexpr bool Overlap(VAddr va) const {
             return va >= module_base && va <= (module_base + size);
         }
 

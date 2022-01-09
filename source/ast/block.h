@@ -40,11 +40,11 @@ namespace Svm::Ast {
             return ir_block;
         }
         
-        constexpr VAddr StartPC() {
+        constexpr VAddr StartPC() const {
             return block_start;
         }
         
-        constexpr bool InBlock(VAddr pc) {
+        constexpr bool InBlock(VAddr pc) const {
             return pc >= block_start && pc < (block_start + size);
         }
 

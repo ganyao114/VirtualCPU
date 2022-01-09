@@ -113,7 +113,7 @@ namespace Svm::Cache {
         Platform::ClearICache(reinterpret_cast<VAddr>(rx), 4);
 #endif
         module_table->BindCache(index, rx);
-        return CodeBuffer((u8*)rx, (u8*)stub_rx, (u8*)rw, size);
+        return {(u8*)rx, (u8*)stub_rx, (u8*)rw, size};
     }
 
     void CacheModule::BindForwardStub(u8 *stub) {

@@ -9,6 +9,8 @@
 
 namespace Svm::IR {
 
+    class Instruction;
+
     enum Size : u8 {
         VOID    = 0,
         U8      = 1 << 0,
@@ -55,15 +57,15 @@ namespace Svm::IR {
 
         explicit Value() = default;
 
-        constexpr u32 Valid() {
+        [[nodiscard]] constexpr bool Valid() const {
             return id != 0;
         }
 
-        constexpr u32 GetId() {
+        [[nodiscard]] constexpr u32 GetId() const {
             return id;
         }
 
-        constexpr Size GetSize() {
+        [[nodiscard]] constexpr Size GetSize() const {
             return size;
         }
 
@@ -72,11 +74,11 @@ namespace Svm::IR {
             return *this;
         }
 
-        constexpr u8 SizeByte() {
+        [[nodiscard]] constexpr u8 SizeByte() const {
             return size;
         }
 
-        constexpr bool IsFloat() {
+        [[nodiscard]] constexpr bool IsFloat() const {
             return is_float;
         }
 
@@ -106,28 +108,24 @@ namespace Svm::IR {
 
         explicit Reg(u8 code, Size size, u8 type) : code{code}, size{size}, type{type} {}
 
-        constexpr u8 GetCode() {
+        [[nodiscard]] constexpr auto GetCode() const {
             return code;
         }
 
-        constexpr u8 GetType() {
+        [[nodiscard]] constexpr auto GetType() const {
             return type;
         }
 
-        constexpr Reg &SetSize(Size size) {
+        constexpr auto &SetSize(Size size) {
             this->size = size;
             return *this;
         }
 
-        constexpr u8 SizeByte() {
+        [[nodiscard]] constexpr auto SizeByte() const {
             return size;
         }
 
-        [[nodiscard]] constexpr u8 SizeByte() const {
-            return size;
-        }
-
-        constexpr Size GetSize() {
+        [[nodiscard]] constexpr auto GetSize() const {
             return size;
         }
 
@@ -140,34 +138,30 @@ namespace Svm::IR {
         
         explicit VReg() {};
         
-        explicit VReg(u8 code) : code{code} {}
+        explicit VReg(auto code) : code{code} {}
         
-        explicit VReg(u8 code, Size size) : code{code}, size{size} {}
+        explicit VReg(auto code, auto size) : code{code}, size{size} {}
 
-        explicit VReg(u8 code, Size size, u8 type) : code{code}, size{size}, type{type} {}
+        explicit VReg(auto code, auto size, auto type) : code{code}, size{size}, type{type} {}
 
-        constexpr u8 GetCode() {
+        [[nodiscard]] constexpr auto GetCode() const {
             return code;
         }
 
-        constexpr u8 GetType() {
+        [[nodiscard]] constexpr auto GetType() const {
             return type;
         }
 
-        constexpr VReg &SetSize(Size size) {
+        constexpr auto &SetSize(Size size) {
             this->size = size;
             return *this;
         }
 
-        constexpr Size GetSize() {
+        [[nodiscard]] constexpr auto GetSize() const {
             return size;
         }
 
-        constexpr u8 SizeByte() {
-            return size;
-        }
-
-        [[nodiscard]] constexpr u8 SizeByte() const {
+        [[nodiscard]] constexpr auto SizeByte() const {
             return size;
         }
 
@@ -203,7 +197,7 @@ namespace Svm::IR {
         constexpr Address(const Imm &addr) : address{addr} {};
         constexpr Address(const Value &addr) : address{addr} {};
 
-        constexpr bool IsConst() {
+        constexpr bool IsConst() const {
             return std::holds_alternative<Imm>(address);
         }
 
@@ -220,7 +214,7 @@ namespace Svm::IR {
 
     struct Label {
 
-        constexpr u32 GetId() {
+        [[nodiscard]] constexpr u32 GetId() const {
             return id;
         }
 
@@ -246,8 +240,6 @@ namespace Svm::IR {
         bool overflow{};
         bool carry{};
     };
-
-    using OperandData = std::variant<Void, Imm, Value, Reg, VReg, Cond, Address, Label, Flags, Size, Opr, CalAct, CalActRes>;
 
     class Operand {
     public:
@@ -332,7 +324,8 @@ namespace Svm::IR {
         }
 
     private:
-        OperandData data;
+        using Data = std::variant<Void, Imm, Value, Reg, VReg, Cond, Address, Label, Flags, Size, Opr, CalAct, CalActRes>;
+        Data data;
     };
 
     class GuestRegInterface {

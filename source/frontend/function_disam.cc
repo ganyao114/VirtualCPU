@@ -127,6 +127,8 @@ namespace Svm {
                     }
                     break;
                 }
+                case IR::IRBlock::DEAD_END:
+                    break;
             }
         }
         

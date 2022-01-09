@@ -101,9 +101,9 @@ namespace Svm::IR {
             case DEAD_END:
                 break;
         }
-        for (auto i = guest_offset_to_ir.begin(); i != guest_offset_to_ir.end(); i++) {
-            if (i->first >= offset) {
-                new_block->guest_offset_to_ir[i->first - offset] = i->second - inst_index;
+        for (auto &i : guest_offset_to_ir) {
+            if (i.first >= offset) {
+                new_block->guest_offset_to_ir[i.first - offset] = i.second - inst_index;
             }
         }
         Terminal(Direct{Imm(start_pc + offset)});

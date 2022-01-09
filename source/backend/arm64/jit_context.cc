@@ -443,6 +443,9 @@ namespace Svm::A64 {
         if (!configs->check_halt) {
             return;
         }
+        if (!need_check_halt) {
+            return;
+        }
         auto &tmp = reg_mng.IP();
         auto &ctx = reg_mng.Context();
         __ Ldrb(tmp, MemOperand(ctx, OFF_HELP(halt_flag)));

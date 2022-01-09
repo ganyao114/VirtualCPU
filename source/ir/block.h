@@ -15,8 +15,8 @@ namespace Svm::IR {
 
     struct CheckCond {
         CheckCond() = default;
-        CheckCond(Cond cond, Address then, Address else_) : cond(cond), then_(std::move(then)),
-                                                            else_(std::move(else_)) {}
+        CheckCond(Cond cond, Address then, Address else_) : cond(cond), then_(then),
+                                                            else_(else_) {}
         Cond cond;
         Address then_;
         Address else_;
@@ -202,15 +202,15 @@ namespace Svm::IR {
             return instructions;
         }
 
-        constexpr VAddr StartPC() {
+        constexpr VAddr StartPC() const {
             return start_pc;
         }
 
-        constexpr u32 BlockCodeSize() {
+        constexpr u32 BlockCodeSize() const {
             return current_offset;
         }
         
-        constexpr bool InBlock(VAddr pc) {
+        constexpr bool InBlock(VAddr pc) const {
             return pc >= start_pc && pc < (start_pc + current_offset);
         }
 

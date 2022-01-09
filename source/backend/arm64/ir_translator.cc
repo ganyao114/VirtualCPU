@@ -117,6 +117,10 @@ break;
         check_rsb_for_next = true;
     }
 
+    void IRCommitA64::CheckHalt() {
+        context->MarkCheckHalt();
+    }
+
     Optional<Operand> IRCommitA64::GetOperand(IR::Value &value) {
         return {};
     }

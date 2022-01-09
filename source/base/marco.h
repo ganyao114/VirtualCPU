@@ -318,7 +318,7 @@ namespace Svm {
     }
 
     FORCE_INLINE String BufferToString(const Vector<u8> &data) {
-        return String(data.begin(), std::find(data.begin(), data.end(), '\0'));
+        return {data.begin(), std::find(data.begin(), data.end(), '\0')};
     }
 
     template<class D, class S>

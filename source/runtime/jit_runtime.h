@@ -53,7 +53,7 @@ namespace Svm {
             this->size = size;
         }
 
-        FORCE_INLINE void SetIR(SharedPtr<IR::IRBlock> ir) {
+        FORCE_INLINE void SetIR(const SharedPtr<IR::IRBlock>& ir) {
             this->ir_block = ir;
             state = static_cast<State>(state | GENERATED_IR);
         }
@@ -79,7 +79,7 @@ namespace Svm {
             return state & REGISTERED_CACHE;
         }
 
-        constexpr bool GeneratedIR() {
+        constexpr bool GeneratedIR() const {
             return !ir_block.expired();
         }
 
@@ -114,11 +114,11 @@ namespace Svm {
             return module_info;
         };
 
-        constexpr u32 GetDispatchIndex() {
+        constexpr u32 GetDispatchIndex() const {
             return dispatcher_index;
         }
 
-        FORCE_INLINE SharedPtr<IR::IRBlock> GetIR() {
+        FORCE_INLINE SharedPtr<IR::IRBlock> GetIR() const {
             return ir_block.lock();
         }
 

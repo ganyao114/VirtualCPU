@@ -69,8 +69,8 @@ namespace Svm::IR {
 #undef INST4
 
     private:
-        VAddr start;
-        VAddr pc;
+        VAddr start{};
+        VAddr pc{};
         IRBlock &block;
         List<IR::Label> labels;
     };

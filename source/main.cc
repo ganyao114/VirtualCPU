@@ -12,6 +12,7 @@
 #include <platform/memory.h>
 #include <libc.h>
 #include <thread>
+#include "base/object_pool.h"
 
 using namespace Svm::X86;
 
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]) {
     masm.subq(Register::R10, Immediate(1));
     masm.subq(Register::R10, Immediate(1));
     masm.subq(Register::R10, Immediate(1));
+    masm.int3();
     masm.jmp(&l2);
     masm.Bind(&l1);
     masm.int3();

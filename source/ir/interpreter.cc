@@ -211,6 +211,10 @@ break;
         // IGNORE
     }
 
+    void Interpreter::CheckHalt() {
+
+    }
+
     void Interpreter::CompareAndSwap(IR::Address &addr, IR::Value &exp_val, IR::Value &new_val) {
         auto address = addr.IsConst() ? addr.ConstAddress().Value<u64>() : V(addr.ValueAddress()).Get<u64>();
         Operate([&](u64 expect, u64 the_new) {

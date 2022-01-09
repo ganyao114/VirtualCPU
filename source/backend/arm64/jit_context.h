@@ -205,6 +205,10 @@ namespace Svm::A64 {
             return end;
         }
 
+        constexpr void MarkCheckHalt() {
+            need_check_halt = true;
+        }
+
     private:
 
         PageFallback &AllocPageFallback(VirtualAddress &va, const CPURegister &reg, u8 action, bool atomic = false);
@@ -224,6 +228,8 @@ namespace Svm::A64 {
         VAddr start_pc{};
         VAddr pc{};
         VAddr end{};
+
+        bool need_check_halt{false};
 
         Label return_to_host;
         std::list<PageFallback> page_fallbacks;

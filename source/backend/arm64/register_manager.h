@@ -164,12 +164,9 @@ namespace Svm::A64 {
 
         bool CastHostReg(IR::VReg &reg) override;
 
-    private:
-
         // ret index
         Optional<u8> AllocInRegList(Vector<Map<u16, u16>> &regs, u16 define, u16 end);
 
-    private:
         const Register &ctx = REG_CTX;
         const Register &page_ptr = REG_PT;
         const Register &status = REG_STATUS;

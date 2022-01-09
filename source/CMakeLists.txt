@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 project(svm)
 ENABLE_LANGUAGE(ASM)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
