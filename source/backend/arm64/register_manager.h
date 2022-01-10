@@ -135,9 +135,9 @@ namespace Svm::A64 {
 
         void DefineFloatValue(IR::Value &value) override;
 
-        void UseValue(u32 instr_id, IR::Value &value) override;
+        void UseValue(IR::Instruction *instr, IR::Value &value) override;
 
-        void UseFloatValue(u32 instr_id, IR::Value &value) override;
+        void UseFloatValue(IR::Instruction *instr, IR::Value &value) override;
 
         u32 OffsetOf(const IR::Reg &reg) override;
 
@@ -149,13 +149,13 @@ namespace Svm::A64 {
 
         bool DirectGetHostReg(IR::Instruction *instr, u8 op_index) override;
 
-        void MarkDirectSetHostReg(u32 instr_id, IR::Reg &reg) override;
+        void MarkDirectSetHostReg(IR::Instruction *instr, IR::Reg &reg) override;
 
-        void MarkDirectSetHostReg(u32 instr_id, IR::VReg &reg) override;
+        void MarkDirectSetHostReg(IR::Instruction *instr, IR::VReg &reg) override;
 
-        void MarkDirectGetHostReg(u32 instr_id, IR::Reg &reg) override;
+        void MarkDirectGetHostReg(IR::Instruction *instr, IR::Reg &reg) override;
 
-        void MarkDirectGetHostReg(u32 instr_id, IR::VReg &reg) override;
+        void MarkDirectGetHostReg(IR::Instruction *instr, IR::VReg &reg) override;
 
     private:
         void AllocateForBlock() override;

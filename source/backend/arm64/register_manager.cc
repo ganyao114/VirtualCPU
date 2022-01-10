@@ -24,32 +24,34 @@ namespace Svm::A64 {
     }
 
     void RegisterManager::DefineValue(IR::Value &value) {
-        auto &instr = block->Instr(value.GetId());
-        auto reg_be_set = registers_allocated.find(value.GetId());
+        auto id = value.Def()->GetId();
+        auto reg_be_set = registers_allocated.find(id);
         if (reg_be_set == registers_allocated.end()) {
-            define_to_use_interval[value.GetId()] = {value.GetId(), value.GetId()};
+            define_to_use_interval[id] = {id, id};
         }
     }
 
     void RegisterManager::DefineFloatValue(IR::Value &value) {
-        auto &instr = block->Instr(value.GetId());
-        auto vreg_be_set = vregisters_allocated.find(value.GetId());
+        auto id = value.Def()->GetId();
+        auto vreg_be_set = vregisters_allocated.find(id);
         if (vreg_be_set == vregisters_allocated.end()) {
-            define_to_use_interval[value.GetId()] = {value.GetId(), value.GetId()};
+            define_to_use_interval[id] = {id, id};
         }
     }
 
-    void RegisterManager::UseValue(u32 instr_id, IR::Value &value) {
-        if (registers_allocated.find(value.GetId()) == registers_allocated.end()) {
-            auto &old = define_to_use_interval[value.GetId()];
-            old = {old.first, instr_id};
+    void RegisterManager::UseValue(IR::Instruction *instr, IR::Value &value) {
+        auto value_id = value.Def()->GetId();
+        if (registers_allocated.find(value_id) == registers_allocated.end()) {
+            auto &old = define_to_use_interval[value_id];
+            old = {old.first, instr->GetId()};
         }
     }
 
-    void RegisterManager::UseFloatValue(u32 instr_id, IR::Value &value) {
-        if (vregisters_allocated.find(value.GetId()) == vregisters_allocated.end()) {
-            auto &old = define_to_use_interval[value.GetId()];
-            old = {old.first, instr_id};
+    void RegisterManager::UseFloatValue(IR::Instruction *instr, IR::Value &value) {
+        auto value_id = value.Def()->GetId();
+        if (vregisters_allocated.find(value_id) == vregisters_allocated.end()) {
+            auto &old = define_to_use_interval[value_id];
+            old = {old.first, instr->GetId()};
         }
     }
 
@@ -69,11 +71,11 @@ namespace Svm::A64 {
     }
 
     const Register &RegisterManager::GetValueRegister(IR::Value &value) {
-        return registers_allocated[value.GetId()];
+        return registers_allocated[value.Def()->GetId()];
     }
 
     const VRegister &RegisterManager::GetValueVRegister(IR::Value &value) {
-        return vregisters_allocated[value.GetId()];
+        return vregisters_allocated[value.Def()->GetId()];
     }
 
     bool RegisterManager::CastHostReg(IR::Reg &reg) {
@@ -333,23 +335,23 @@ namespace Svm::A64 {
         }
     }
 
-    void RegisterManager::MarkDirectSetHostReg(u32 instr_id, IR::Reg &reg) {
+    void RegisterManager::MarkDirectSetHostReg(IR::Instruction *instr, IR::Reg &reg) {
         const auto &host = ToHostRegister(reg);
-        registers_allocated.emplace(instr_id, host);
+        registers_allocated.emplace(instr->GetId(), host);
     }
 
-    void RegisterManager::MarkDirectSetHostReg(u32 instr_id, IR::VReg &reg) {
+    void RegisterManager::MarkDirectSetHostReg(IR::Instruction *instr, IR::VReg &reg) {
         const auto &host = ToHostVRegister(reg);
-        vregisters_allocated.emplace(instr_id, host);
+        vregisters_allocated.emplace(instr->GetId(), host);
     }
 
-    void RegisterManager::MarkDirectGetHostReg(u32 instr_id, IR::Reg &reg) {
+    void RegisterManager::MarkDirectGetHostReg(IR::Instruction *instr, IR::Reg &reg) {
         const auto &host = ToHostRegister(reg);
-        registers_allocated.emplace(instr_id, host);
+        registers_allocated.emplace(instr->GetId(), host);
     }
 
-    void RegisterManager::MarkDirectGetHostReg(u32 instr_id, IR::VReg &reg) {
+    void RegisterManager::MarkDirectGetHostReg(IR::Instruction *instr, IR::VReg &reg) {
         const auto &host = ToHostVRegister(reg);
-        vregisters_allocated.emplace(instr_id, host);
+        vregisters_allocated.emplace(instr->GetId(), host);
     }
 }

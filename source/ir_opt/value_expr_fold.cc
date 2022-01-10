@@ -23,30 +23,29 @@ namespace Svm::IR {
 
     void ValueExprFoldOpt::Optimize(IRBlock *block, OptResult *result) {
         auto opt_value_fold = result->GetOptValueFold();
-        for (auto instr : block->Sequence()) {
-            if (!result->IsEnable(instr->GetId())) {
+        for (auto &instr : block->Sequence()) {
+            if (!instr.Enabled()) {
                 continue;
             }
-            auto &ret_value = instr->GetReturn();
+            auto &ret_value = instr.GetReturn();
             if (!ret_value.IsValue()) {
                 continue;
             }
-            if (instr->GetOpCode() == OpCode::GetReg || instr->GetOpCode() == OpCode::GetVReg) {
+            if (instr.GetOpCode() == OpCode::GetReg || instr.GetOpCode() == OpCode::GetVReg) {
                 continue;
             }
-            auto &uses = instr->GetUses();
+            auto &uses = instr.GetUses();
             // if more than one use, do not fold
             if (uses.size() > 1) {
                 continue;
             }
             bool fold{false};
-            for (auto use_id : uses) {
-                auto instr_dest = &block->Instr(use_id);
+            for (auto instr_dest : uses) {
                 if (instr_dest->GetOpCode() == OpCode::SetReg || instr_dest->GetOpCode() == OpCode::SetVReg) {
                     fold = false;
                     break;
                 }
-                if (opt_value_fold->CouldFold(instr_dest, instr)) {
+                if (opt_value_fold->CouldFold(instr_dest, &instr)) {
                     fold = true;
                 } else {
                     fold = false;
@@ -54,8 +53,8 @@ namespace Svm::IR {
                 }
             }
             if (fold) {
-                opt_value_fold->MarkFold(instr->GetId(), uses);
-                result->Disable(instr->GetId());
+                opt_value_fold->MarkFold(&instr, uses);
+                instr.Disable();
             }
         }
     }

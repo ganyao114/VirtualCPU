@@ -58,11 +58,11 @@ namespace Svm::IR {
         explicit Value() = default;
 
         [[nodiscard]] constexpr bool Valid() const {
-            return id != 0;
+            return def;
         }
 
-        [[nodiscard]] constexpr u32 GetId() const {
-            return id;
+        [[nodiscard]] constexpr Instruction *Def() const {
+            return def;
         }
 
         [[nodiscard]] constexpr Size GetSize() const {
@@ -83,7 +83,7 @@ namespace Svm::IR {
         }
 
         // value id
-        u32 id{};
+        Instruction *def{};
         Size size{};
         bool is_float{false};
     };
@@ -214,11 +214,11 @@ namespace Svm::IR {
 
     struct Label {
 
-        [[nodiscard]] constexpr u32 GetId() const {
-            return id;
+        [[nodiscard]] constexpr auto Ref() const {
+            return ref;
         }
 
-        u32 id{};
+        Instruction *ref{};
     };
 
     struct Opr {

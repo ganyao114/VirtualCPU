@@ -20,13 +20,13 @@ namespace Svm::IR {
 
         virtual bool DirectGetHostReg(Instruction *instr, u8 op_index);
 
-        virtual void MarkDirectSetHostReg(u32 instr_id, IR::Reg &reg);
+        virtual void MarkDirectSetHostReg(Instruction *instr, IR::Reg &reg);
 
-        virtual void MarkDirectSetHostReg(u32 instr_id, IR::VReg &reg);
+        virtual void MarkDirectSetHostReg(Instruction *instr, IR::VReg &reg);
 
-        virtual void MarkDirectGetHostReg(u32 instr_id, IR::Reg &reg);
+        virtual void MarkDirectGetHostReg(Instruction *instr, IR::Reg &reg);
 
-        virtual void MarkDirectGetHostReg(u32 instr_id, IR::VReg &reg);
+        virtual void MarkDirectGetHostReg(Instruction *instr, IR::VReg &reg);
     };
 
     class OptValueFold : public BaseObject, CopyDisable {
@@ -46,9 +46,9 @@ namespace Svm::IR {
         
         virtual bool CouldFold(Instruction *dest, Instruction *src);
         
-        virtual void MarkFold(u32 value_src_id, Set<u32> &dest_instr_set);
+        virtual void MarkFold(Instruction *value_src, Set<Instruction *> &dest_instr_set);
 
-        virtual Op *GetFoldOperand(u32 value_src_id);
+        virtual Op *GetFoldOperand(Instruction *value_src);
 
         Map<u32, Op> folded_ops{};
     };
@@ -92,9 +92,9 @@ namespace Svm::IR {
 
         virtual void DefineFloatValue(IR::Value &value) {};
 
-        virtual void UseValue(u32 instr_id, IR::Value &value) {};
+        virtual void UseValue(Instruction *instr, IR::Value &value) {};
 
-        virtual void UseFloatValue(u32 instr_id, IR::Value &value) {};
+        virtual void UseFloatValue(Instruction *instr, IR::Value &value) {};
 
         virtual void AllocateForBlock() {};
 
@@ -105,14 +105,6 @@ namespace Svm::IR {
         
         explicit OptResult() {}
 
-        void Disable(u32 id);
-
-        void Enable(u32 id);
-
-        bool IsEnable(u32 id) {
-            return disables.find(id) == disables.end();
-        }
-
         virtual OptHostReg *GetOptHostReg();
 
         virtual OptValueFold *GetOptValueFold();
@@ -122,9 +114,6 @@ namespace Svm::IR {
         virtual OptFlagsSync *GetOptFlagsGetSet();
 
         virtual RegAllocPass *GetRegAllocPass();
-
-    private:
-        Set<u32> disables;
     };
 
 }

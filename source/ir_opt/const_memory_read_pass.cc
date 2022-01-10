@@ -32,30 +32,30 @@ namespace Svm::IR {
 
     void ConstMemoryReadOpt::Optimize(IRBlock *block, OptResult *result) {
         auto opt_const_read = result->GetOptConstRead();
-        for (auto instr : block->Sequence()) {
-            if (!result->IsEnable(instr->GetId())) {
+        for (auto &instr : block->Sequence()) {
+            if (!instr.Enabled()) {
                 continue;
             }
 
-            if (instr->GetOpCode() != OpCode::ReadMemory) {
+            if (instr.GetOpCode() != OpCode::ReadMemory) {
                 continue;
             }
 
-            auto &address = instr->GetParam<Address>(0);
-            auto size = instr->GetReturn().Get<Value>().GetSize();
+            auto &address = instr.GetParam<Address>(0);
+            auto size = instr.GetReturn().Get<Value>().GetSize();
 
             if (address.IsConst()) {
-                VAddr vaddr = address.ConstAddress().Value<VAddr>();
+                auto vaddr = address.ConstAddress().Value<VAddr>();
                 if (opt_const_read->IsReadOnly(vaddr)) {
-                    TransferToRead(instr, vaddr, opt_const_read, size);
+                    TransferToRead(&instr, vaddr, opt_const_read, size);
                 }
             } else {
-                auto &addr_from = block->Instr(address.ValueAddress().GetId());
-                if (addr_from.GetOpCode() == OpCode::LoadImm) {
-                    VAddr vaddr = addr_from.GetParam<Imm>(0).Value<VAddr>();
+                auto addr_from = address.ValueAddress().Def();
+                if (addr_from->GetOpCode() == OpCode::LoadImm) {
+                    auto vaddr = addr_from->GetParam<Imm>(0).Value<VAddr>();
                     if (opt_const_read->IsReadOnly(vaddr)) {
-                        addr_from.UnUse(instr->GetId());
-                        TransferToRead(instr, vaddr, opt_const_read, size);
+                        addr_from->UnUse(&instr);
+                        TransferToRead(&instr, vaddr, opt_const_read, size);
                     }
                 }
             }

@@ -250,6 +250,7 @@ namespace Svm {
         Map<VAddr, UniquePtr<CacheModule>> mapped_modules;
         CowVector<void*> cache_module_bases{max_cache_modules};
         LruContainer<IR::IRBlock> ir_blocks_lru{0x10000};
+        SlabHeap<IR::Instruction> ir_instr_heap{0x100000};
 
         UserConfigs configs;
         std::set<VCpu*> cores;

@@ -6,28 +6,32 @@
 
 namespace Svm::IR {
 
-    IRBlock::IRBlock() {
-        guest_offset_to_ir[0] = 0;
-    }
+    IRBlock::IRBlock() {}
 
     IRBlock::IRBlock(VAddr pc) : start_pc(pc) {
-        guest_offset_to_ir[0] = 0;
         instructions = MakeShared<InstrContainer>();
+    }
+
+    IRBlock::IRBlock(VAddr pc, ObjectPool<Instruction> *pool) : start_pc(pc) {
+        instructions = MakeShared<InstrContainer>(pool);
+    }
+
+    IRBlock::IRBlock(VAddr pc, SlabHeap<Instruction> *heap) : start_pc(pc) {
+        instructions = MakeShared<InstrContainer>(heap);
     }
 
     void IRBlock::AdvancePC(const IR::Imm &imm) {
         Emit<Void>(OpCode::AdvancePC, {imm});
         current_offset += imm.Value<u32>();
-        guest_offset_to_ir[current_offset] = instr_sequence.size();
     }
 
     void IRBlock::BindLabel(IR::Label *label) {
-        for (auto id : pending_labels[label]) {
-            auto &instr = Instr(id);
+        auto &instrs = pending_labels[label];
+        for (auto instr : instrs) {
             for (u8 index = 0; index < MAX_OPERANDS; index++) {
-                auto &op = instr.GetOperand(index);
+                auto &op = instr->GetOperand(index);
                 if (op.IsLabel()) {
-                    op.Get<Label>().id = Sequence().back()->GetId();
+                    op.Get<Label>().ref = &Sequence().back();
                     break;
                 }
             }
@@ -35,8 +39,8 @@ namespace Svm::IR {
         pending_labels.erase(label);
     }
 
-    void IRBlock::LinkLabel(IR::Label *label, u32 id) {
-        pending_labels[label].emplace(id);
+    void IRBlock::LinkLabel(IR::Label *label, Instruction *instr) {
+        pending_labels[label].emplace(instr);
     }
 
     void IRBlock::Terminal() {
@@ -67,47 +71,46 @@ namespace Svm::IR {
         if (id == TERMINAL_INSTR_ID) {
             return terminal_instr;
         }
-        return (*instructions)[id];
+        return *instr_indexes[id];
     }
 
-    void IRBlock::RemoveInstr(u32 id) {
-        instructions->erase(id);
+    void IRBlock::RemoveInstr(Instruction *instr) {
+        instr_sequence.erase(*instr);
+        instructions->Destroy(instr);
     }
 
     bool IRBlock::Split(const SharedPtr<IRBlock> &new_block, u32 offset) {
-        auto itr = guest_offset_to_ir.find(offset);
-        if (itr == guest_offset_to_ir.end()) {
-            return false;
-        }
-        auto inst_index = itr->second;
-        auto new_start = std::next(instr_sequence.begin(), inst_index);
-        new_block->instructions = instructions;
-        new_block->instr_sequence.splice(new_block->instr_sequence.begin(), instr_sequence, new_start, instr_sequence.end());
-        new_block->start_pc = start_pc + offset;
-        new_block->current_offset = current_offset - offset;
-        new_block->terminal_type = terminal_type;
-        new_block->terminal_reason = terminal_reason;
-        current_offset = offset;
-        switch (terminal_type) {
-            case DIRECT:
-                new_block->direct_terminal = direct_terminal;
-                break;
-            case CHECK_BOOL:
-                new_block->check_bool = check_bool;
-                break;
-            case CHECK_COND:
-                new_block->check_cond = check_cond;
-                break;
-            case DEAD_END:
-                break;
-        }
-        for (auto &i : guest_offset_to_ir) {
-            if (i.first >= offset) {
-                new_block->guest_offset_to_ir[i.first - offset] = i.second - inst_index;
-            }
-        }
-        Terminal(Direct{Imm(start_pc + offset)});
-        terminal_reason = SPLIT;
+//        for (auto &) {
+//
+//        }
+//        auto itr = guest_offset_to_ir.find(offset);
+//        if (itr == guest_offset_to_ir.end()) {
+//            return false;
+//        }
+//        auto inst_index = itr->second;
+//        auto new_start = std::next(instr_sequence.begin(), inst_index);
+//        new_block->instructions = instructions;
+////        new_block->instr_sequence.splice(new_block->instr_sequence.begin(), instr_sequence, new_start, instr_sequence.end());
+//        new_block->start_pc = start_pc + offset;
+//        new_block->current_offset = current_offset - offset;
+//        new_block->terminal_type = terminal_type;
+//        new_block->terminal_reason = terminal_reason;
+//        current_offset = offset;
+//        switch (terminal_type) {
+//            case DIRECT:
+//                new_block->direct_terminal = direct_terminal;
+//                break;
+//            case CHECK_BOOL:
+//                new_block->check_bool = check_bool;
+//                break;
+//            case CHECK_COND:
+//                new_block->check_cond = check_cond;
+//                break;
+//            case DEAD_END:
+//                break;
+//        }
+//        Terminal(Direct{Imm(start_pc + offset)});
+//        terminal_reason = SPLIT;
         return true;
     }
 
@@ -120,10 +123,10 @@ namespace Svm::IR {
     }
 
     void IRBlock::LogicalFlags() {
-        for (auto instr : instr_sequence) {
-            switch (instr->GetOpCode()) {
+        for (auto &instr : instr_sequence) {
+            switch (instr.GetOpCode()) {
                 case OpCode::GetOverFlow:
-                    Instr(instr->GetParam<Value>(0).GetId()).SetCalAct({true});
+                    instr.GetParam<Value>(0).Def()->SetCalAct({true});
                     break;
                 default:
                     continue;
@@ -133,62 +136,62 @@ namespace Svm::IR {
 
     void IRBlock::BuildUses() {
         // uses
-        for (auto instr : instr_sequence) {
-            instr->ClearUses();
-            if (instr->GetOpCode() == OpCode::LoadImm) {
-                instr->GetReturn().Get<Value>().SetSize(instr->GetParam<Imm>(0).GetSize());
+        for (auto &instr : instr_sequence) {
+            instr.ClearUses();
+            if (instr.GetOpCode() == OpCode::LoadImm) {
+                instr.GetReturn().Get<Value>().SetSize(instr.GetParam<Imm>(0).GetSize());
             }
             for (u8 index = 0; index < MAX_OPERANDS; index++) {
-                auto &op = instr->GetOperand(index);
+                auto &op = instr.GetOperand(index);
                 if (op.IsValue()) {
                     auto &value = op.Get<Value>();
                     if (value.Valid()) {
-                        Instr(value.GetId()).Use(instr->GetId());
+                        value.Def()->Use(&instr);
                     }
                 } else if (op.IsAddress()) {
                     auto &address = op.Get<Address>();
                     if (!address.IsConst()) {
-                        Instr(address.ValueAddress().GetId()).Use(instr->GetId());
+                        address.ValueAddress().Def()->Use(&instr);
                     }
                 } else if (op.IsLabel()) {
-                    auto label_id = op.Get<Label>().GetId();
-                    if (instr->GetOpCode() != OpCode::BindLabel && label_id != instr->GetId()) {
-                        Instr(label_id).Use(instr->GetId());
+                    auto label_ref = op.Get<Label>().Ref();
+                    if (instr.GetOpCode() != OpCode::BindLabel && label_ref != &instr) {
+                        label_ref->Use(&instr);
                     }
                 }
             }
         }
 
         if (terminal_type == CHECK_BOOL) {
-            auto &instr = Instr(check_bool.bool_value.GetId());
-            instr.Use(TERMINAL_INSTR_ID);
+            auto instr = check_bool.bool_value.Def();
+            instr->Use(&terminal_instr);
         }
 
         switch (terminal_type) {
             case DIRECT:
                 if (!direct_terminal.next_block.IsConst()) {
-                    auto &instr = Instr(direct_terminal.next_block.ValueAddress().GetId());
-                    instr.Use(TERMINAL_INSTR_ID);
+                    auto instr = direct_terminal.next_block.ValueAddress().Def();
+                    instr->Use(&terminal_instr);
                 }
                 break;
             case CHECK_BOOL:
                 if (!check_bool.then_.IsConst()) {
-                    auto &instr = Instr(check_bool.then_.ValueAddress().GetId());
-                    instr.Use(TERMINAL_INSTR_ID);
+                    auto instr = check_bool.then_.ValueAddress().Def();
+                    instr->Use(&terminal_instr);
                 }
                 if (!check_bool.else_.IsConst()) {
-                    auto &instr = Instr(check_bool.else_.ValueAddress().GetId());
-                    instr.Use(TERMINAL_INSTR_ID);
+                    auto instr = check_bool.else_.ValueAddress().Def();
+                    instr->Use(&terminal_instr);
                 }
                 break;
             case CHECK_COND:
                 if (!check_cond.then_.IsConst()) {
-                    auto &instr = Instr(check_cond.then_.ValueAddress().GetId());
-                    instr.Use(TERMINAL_INSTR_ID);
+                    auto instr = check_cond.then_.ValueAddress().Def();
+                    instr->Use(&terminal_instr);
                 }
                 if (!check_cond.else_.IsConst()) {
-                    auto &instr = Instr(check_cond.else_.ValueAddress().GetId());
-                    instr.Use(TERMINAL_INSTR_ID);
+                    auto instr = check_cond.else_.ValueAddress().Def();
+                    instr->Use(&terminal_instr);
                 }
                 break;
             case DEAD_END:
@@ -198,8 +201,8 @@ namespace Svm::IR {
     }
 
     void IRBlock::ClearUses() {
-        for (auto instr : instr_sequence) {
-            instr->ClearUses();
+        for (auto &instr : instr_sequence) {
+            instr.ClearUses();
         }
     }
 
@@ -256,6 +259,29 @@ namespace Svm::IR {
         }
         if (size != VOID) {
             instr->GetReturn().Get<Value>().SetSize(size);
+        }
+    }
+
+    void IRBlock::IndexInstructions() {
+        instr_indexes.resize(Sequence().size());
+        int cur_index{0};
+        for (auto &instr : Sequence()) {
+            instr.SetId(cur_index);
+            instr_indexes[cur_index] = &instr;
+            cur_index++;
+        }
+    }
+
+    void IRBlock::ClearIndexes() {
+        instr_indexes.clear();
+        instr_indexes.resize(0);
+    }
+
+    IRBlock::~IRBlock() {
+        while (!instr_sequence.empty()) {
+            auto itr = instr_sequence.begin();
+            instr_sequence.erase(itr);
+            instructions->Destroy(&*itr);
         }
     }
 }

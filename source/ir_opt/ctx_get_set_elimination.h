@@ -18,36 +18,36 @@ namespace Svm::IR {
 
         void FilterRegUseForOldVer(IRBlock *block, OptResult *result, OptHostReg *host_regs);
 
-        bool ShouldSkip(u32 id);
+        bool ShouldSkip(Instruction* inst);
 
-        void SetValue(Reg &reg, u32 def_inst) {
+        void SetValue(Reg &reg, Instruction* def_inst) {
             cur_reg_value[reg.code] = def_inst;
         }
 
-        void SetValue(VReg &reg, u32 def_inst) {
+        void SetValue(VReg &reg, Instruction* def_inst) {
             cur_vreg_value[reg.code] = def_inst;
         }
 
-        s32 GetValue(Reg &reg) {
+        Instruction* GetValue(Reg &reg) {
             auto itr = cur_reg_value.find(reg.code);
             if (itr == cur_reg_value.end()) {
-                return -1;
+                return {};
             }
             return itr->second;
         }
 
-        s32 GetValue(VReg &reg) {
+        Instruction* GetValue(VReg &reg) {
             auto itr = cur_vreg_value.find(reg.code);
             if (itr == cur_vreg_value.end()) {
-                return -1;
+                return {};
             }
             return itr->second;
         }
 
-        Map<u32, u32> host_regs_versions;
-        Set<u32> skip_instructions;
-        Map<u8, u32> cur_reg_value;
-        Map<u8, u32> cur_vreg_value;
+        Map<Instruction*, Instruction*> host_regs_versions;
+        Set<Instruction*> skip_instructions;
+        Map<u8, Instruction*> cur_reg_value;
+        Map<u8, Instruction*> cur_vreg_value;
     };
 
 }

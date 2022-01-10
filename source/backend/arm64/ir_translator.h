@@ -39,9 +39,9 @@ namespace Svm::A64 {
 
         bool CouldFold(IR::Instruction *dest, IR::Instruction *src) override;
 
-        void MarkFold(u32 value_src_id, Set<u32> &dest_instr_set) override;
+        void MarkFold(IR::Instruction *value_src, Set<IR::Instruction *> &dest_instr_set) override;
 
-        Op *GetFoldOperand(u32 value_src_id) override;
+        Op *GetFoldOperand(IR::Instruction *value_src) override;
 
         bool CanSyncFlagSet(IR::Flags &flag, IR::Instruction *instr_flag_from) override;
 

@@ -9,7 +9,7 @@ namespace Svm::IR {
     Optional<u8> Instruction::GetIndex(Value &value) {
         for (u8 index = 0; index < MAX_OPERANDS; index++) {
             if (operands[index].IsValue()) {
-                if (GetParam<Value>(index).GetId() == value.GetId()) {
+                if (GetParam<Value>(index).Def() == value.Def()) {
                     return index;
                 }
             }

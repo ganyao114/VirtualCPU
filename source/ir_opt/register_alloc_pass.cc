@@ -6,13 +6,12 @@
 
 namespace Svm::IR {
 
-
     void RegAllocatePass::Optimize(IRBlock *block, OptResult *result) {
         auto pass = result->GetRegAllocPass();
 
-        for (auto instr : block->Sequence()) {
-            if (result->IsEnable(instr->GetId())) {
-                auto &ret = instr->GetReturn();
+        for (auto &instr : block->Sequence()) {
+            if (instr.Enabled()) {
+                auto &ret = instr.GetReturn();
                 if (ret.IsValue()) {
                     auto &ret_value = ret.Get<Value>();
                     if (ret_value.IsFloat()) {
@@ -22,18 +21,18 @@ namespace Svm::IR {
                     }
                 }
                 for (int i = 0; i < MAX_OPERANDS; ++i) {
-                    auto &op = instr->GetOperand(i);
+                    auto &op = instr.GetOperand(i);
                     if (op.IsValue()) {
                         auto &param = op.Get<Value>();
                         if (param.IsFloat()) {
-                            pass->UseFloatValue(instr->GetId(), param);
+                            pass->UseFloatValue(&instr, param);
                         } else {
-                            pass->UseValue(instr->GetId(), param);
+                            pass->UseValue(&instr, param);
                         }
                     } else if (op.IsAddress()) {
                         auto &param = op.Get<Address>();
                         if (!param.IsConst()) {
-                            pass->UseValue(instr->GetId(), param.ValueAddress());
+                            pass->UseValue(&instr, param.ValueAddress());
                         }
                     }
                 }

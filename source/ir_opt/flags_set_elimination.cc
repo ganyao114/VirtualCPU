@@ -20,18 +20,18 @@ namespace Svm::IR {
 
         auto &instr_seq = block->Sequence();
         // Opt Set
-        for (auto instr : instr_seq) {
-            if (instr->GetOpCode() == OpCode::SetFlag) {
-                auto flag = instr->GetParam<Flags>(0).flag;
-                append_flag_sets(flag, instr->GetId());
-            } else if (instr->GetOpCode() == OpCode::GetFlag) {
-                auto flag = instr->GetParam<Flags>(1).flag;
-                append_flag_gets(flag, instr->GetId());
-            } else if (instr->GetOpCode() == OpCode::ClearFlags) {
-                auto flags = instr->GetParam<Flags>(0).flag;
+        for (auto &instr : instr_seq) {
+            if (instr.GetOpCode() == OpCode::SetFlag) {
+                auto flag = instr.GetParam<Flags>(0).flag;
+                append_flag_sets(flag, instr.GetId());
+            } else if (instr.GetOpCode() == OpCode::GetFlag) {
+                auto flag = instr.GetParam<Flags>(1).flag;
+                append_flag_gets(flag, instr.GetId());
+            } else if (instr.GetOpCode() == OpCode::ClearFlags) {
+                auto flags = instr.GetParam<Flags>(0).flag;
                 for (int i = 0; i < sizeof(Flags::FlagValue) * 8; ++i) {
                     if ((flags >> i) & 1) {
-                        append_flag_sets(Flags::FlagValue(1) << i, instr->GetId());
+                        append_flag_sets(Flags::FlagValue(1) << i, instr.GetId());
                     }
                 }
             }
@@ -69,10 +69,10 @@ namespace Svm::IR {
                     // clear flag
                     flags &= ~flag;
                     if (flags) {
-                        result->Disable(set_inst_id);
+                        block->Instr(set_inst_id).Disable();
                     }
                 } else {
-                    result->Disable(set_inst_id);
+                    block->Instr(set_inst_id).Disable();
                 }
             }
         }

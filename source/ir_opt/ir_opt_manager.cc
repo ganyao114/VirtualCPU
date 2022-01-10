@@ -10,6 +10,8 @@
 #include "value_expr_fold.h"
 #include "register_alloc_pass.h"
 #include "flags_set_elimination.h"
+#include "instruction_id_pass.h"
+#include "instruction_id_clear.h"
 
 namespace Svm::IR {
 
@@ -18,12 +20,16 @@ namespace Svm::IR {
                 MakeShared<ConstMemoryReadOpt>(),
                 MakeShared<ConstFoldingOpt>(),
                 MakeShared<ConstMemoryReadOpt>(),
+                MakeShared<InstrIdPass>(),
                 MakeShared<FlagsSetOpt>(),
                 MakeShared<DeadCodeRemoveOpt>(),
                 MakeShared<CtxGetSetElimination>(),
                 MakeShared<ValueExprFoldOpt>(),
-                MakeShared<RegAllocatePass>()
+                MakeShared<InstrIdPass>(),
+                MakeShared<RegAllocatePass>(),
+                MakeShared<InstrIdClear>()
         };
+        UniqueLock<SharedMutex> guard(block->Lock());
         for (auto &opt : opts) {
             opt->Optimize(block, result);
         }

@@ -19,6 +19,7 @@ option(BUILD_CMD "Build Command line" ON)
 
 set(SOURCES
         base/marco.cc
+        base/slab_alloc.cc
         asm/x86/assembler.cc
         asm/x86/memory_region.cc
         asm/x86/64/assembler_x86_64.cc
@@ -46,6 +47,9 @@ set(SOURCES
         ir_opt/register_alloc_pass.cc
         ir_opt/flags_get_set_sync.cc
         ir_opt/flags_set_elimination.cc
+        ir_opt/ir_opt_manager.cc
+        ir_opt/instruction_id_pass.cc
+        ir_opt/instruction_id_clear.cc
         platform/memory.cc
         platform/unix_file.cc
         runtime/jit_runtime.cc
@@ -59,7 +63,6 @@ set(SOURCES
         backend/arm64/ir_translator.cc
         backend/register_manager.cc
         backend/label_manager.cc
-        ir_opt/ir_opt_manager.cc
         backend/arm64/jit_context.cc
         backend/arm64/label_manager.cc
         backend/arm64/register_manager.cc

@@ -51,12 +51,12 @@ namespace Svm::IR {
 
     void Assembler::BranchCond(IR::Cond cond, IR::Label &label) {
         block.Emit<Void>(OpCode::BranchCond, {cond, label});
-        block.LinkLabel(&label, block.Sequence().back()->GetId());
+        block.LinkLabel(&label, &block.Sequence().back());
     }
 
     void Assembler::BranchBool(IR::Value &bool_value, IR::Label &label) {
         block.Emit<Void>(OpCode::BranchBool, {bool_value, label});
-        block.LinkLabel(&label, block.Sequence().back()->GetId());
+        block.LinkLabel(&label, &block.Sequence().back());
     }
 
     IR::Value &Assembler::Operand(const IR::Value &left, u32 ext) {

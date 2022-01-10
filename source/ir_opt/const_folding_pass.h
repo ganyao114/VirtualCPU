@@ -23,28 +23,28 @@ namespace Svm::IR {
         template <typename ContExpr>
         bool FoldCommutative(IRBlock *block, Instruction *instr, ContExpr expr) {
 
-            auto &left_expr = block->Instr(instr->GetParam<Value>(0).GetId());
+            auto left_expr = instr->GetParam<Value>(0).Def();
 
-            if (left_expr.GetOpCode() != OpCode::LoadImm) {
+            if (left_expr->GetOpCode() != OpCode::LoadImm) {
                 return false;
             }
 
-            u64 left{};
-            u64 right{};
+            u64 left;
+            u64 right;
 
             if (instr->GetOperand(1).IsImm()) {
                 right = instr->GetParam<Imm>(1).data;
             } else {
-                auto &right_expr = block->Instr(instr->GetParam<Value>(1).GetId());
-                if (right_expr.GetOpCode() != OpCode::LoadImm) {
+                auto right_expr = instr->GetParam<Value>(1).Def();
+                if (right_expr->GetOpCode() != OpCode::LoadImm) {
                     return false;
                 }
-                right = right_expr.GetParam<Imm>(0).data;
-                right_expr.UnUse(instr->GetId());
+                right = right_expr->GetParam<Imm>(0).data;
+                right_expr->UnUse(instr);
             }
-            left = left_expr.GetParam<Imm>(0).data;
+            left = left_expr->GetParam<Imm>(0).data;
 
-            left_expr.UnUse(instr->GetId());
+            left_expr->UnUse(instr);
             instr->SetOpCode(OpCode::LoadImm);
             auto result = expr(left, right);
             instr->SetParam(0, Imm{result});

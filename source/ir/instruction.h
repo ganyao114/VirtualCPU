@@ -5,11 +5,13 @@
 #pragma once
 
 #include "operand.h"
+#include <base/intrusive_list.hpp>
 
 namespace Svm::IR {
 
-    constexpr auto INVALID_INSTR_ID = 0;
-    constexpr auto TERMINAL_INSTR_ID = 0xFFFFFFFF;
+    constexpr auto INVALID_INSTR_ID = 0xFFFFFFFF;
+    constexpr auto TERMINAL_INSTR_ID = UINT16_MAX - 1;
+    constexpr auto DISABLED_INSTR_ID = 0xFFFFFFF7;
     constexpr auto MAX_OPERANDS = 4;
 
     enum class OpCode : u8 {
@@ -37,7 +39,7 @@ namespace Svm::IR {
         COUNT
     };
 
-    class Instruction : public BaseObject {
+    class Instruction : CopyDisable {
     public:
 
         explicit Instruction() : opcode(OpCode::UNK) {}
@@ -54,7 +56,7 @@ namespace Svm::IR {
             this->id = id;
         }
 
-        constexpr u32 GetId() {
+        [[nodiscard]] constexpr u32 GetId() const {
             return id;
         }
 
@@ -82,11 +84,11 @@ namespace Svm::IR {
         }
 
         template<typename T>
-        constexpr void SetReturn(u32 id) {
+        constexpr void InitRet() {
             ret = T{};
             if (ret.IsValue()) {
                 auto &value = ret.Get<Value>();
-                value.id = id;
+                value.def = this;
                 value.is_float = FloatResult();
             }
         }
@@ -95,15 +97,15 @@ namespace Svm::IR {
             return ret;
         }
 
-        constexpr void Use(u32 id) {
-            uses.emplace(id);
+        constexpr void Use(Instruction *instr) {
+            uses.emplace(instr);
         }
 
-        constexpr void UnUse(u32 id) {
-            uses.erase(id);
+        constexpr void UnUse(Instruction *instr) {
+            uses.erase(instr);
         }
 
-        constexpr Set<u32> &GetUses() {
+        constexpr Set<Instruction*> &GetUses() {
             return uses;
         }
 
@@ -132,12 +134,22 @@ namespace Svm::IR {
             return GetParam<CalAct>(3);
         }
 
+        constexpr void Disable() {
+            id = DISABLED_INSTR_ID;
+        }
+
+        [[nodiscard]] constexpr bool Enabled() const {
+            return id != DISABLED_INSTR_ID;
+        }
+
+        intrusive_node node{};
+
     private:
         u32 id{INVALID_INSTR_ID};
         OpCode opcode;
         Array<Operand, MAX_OPERANDS> operands;
         Operand ret{};
-        Set<u32> uses{};
+        Set<Instruction*> uses{};
     };
 
 }

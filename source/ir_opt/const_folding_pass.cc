@@ -8,13 +8,14 @@ namespace Svm::IR {
 
 
     void ConstFoldingOpt::Optimize(IRBlock *block, OptResult *result) {
-        for (auto instr : block->Sequence()) {
-            if (!result->IsEnable(instr->GetId())) {
+        for (auto &instr : block->Sequence()) {
+
+            if (!instr.Enabled()) {
                 continue;
             }
 
             bool could_opt{false};
-            switch (instr->GetOpCode()) {
+            switch (instr.GetOpCode()) {
                 case OpCode::AddImm:
                 case OpCode::AndImm:
                 case OpCode::MulImm:
@@ -23,9 +24,8 @@ namespace Svm::IR {
                 case OpCode::SbbImm:
                 case OpCode::DivImm:
                 case OpCode::OrImm: {
-                    auto &val = instr->GetParam<Value>(0);
-                    auto &val_from = block->Instr(val.GetId());
-                    if (val_from.GetOpCode() == OpCode::LoadImm) {
+                    auto val_from = instr.GetParam<Value>(0).Def();
+                    if (val_from->GetOpCode() == OpCode::LoadImm) {
 
                     }
                     break;

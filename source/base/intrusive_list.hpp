@@ -224,11 +224,15 @@ namespace Svm {
             return *this;
         }
 
+        constexpr bool empty() {
+            return ptr_;
+        }
+
         constexpr difference_type operator-(const list_iterator &rhs) { return ptr_ - rhs.ptr_; }
 
         constexpr bool operator==(const list_iterator &rhs) const { return ptr_ == rhs.ptr_; }
 
-        constexpr bool operator!=(const list_iterator &rhs) const { return *this != rhs; }
+        constexpr bool operator!=(const list_iterator &rhs) const { return ptr_ != rhs.ptr_; }
 
         constexpr bool operator<(const list_iterator &rhs) const { return (rhs - *this) > 0; }
 

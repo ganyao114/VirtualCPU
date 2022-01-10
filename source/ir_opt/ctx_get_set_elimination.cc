@@ -22,67 +22,65 @@ namespace Svm::IR {
         auto &instr_seq = block->Sequence();
         auto host_regs = result->GetOptHostReg();
         FilterRegUseForOldVer(block, result, host_regs);
-        for (auto instr : instr_seq) {
-            if (!result->IsEnable(instr->GetId()) || ShouldSkip(instr->GetId())) {
+        for (auto &instr : instr_seq) {
+            if (!instr.Enabled() || ShouldSkip(&instr)) {
                 continue;
             }
-            switch (instr->GetOpCode()) {
+            switch (instr.GetOpCode()) {
                 case OpCode::SetReg: {
-                    auto &reg = instr->GetParam<Reg>(0);
+                    auto &reg = instr.GetParam<Reg>(0);
                     if (host_regs->CastHostReg(reg)) {
-                        auto &value = instr->GetParam<Value>(1);
-                        auto direct_access = host_regs->DirectSetHostReg(&block->Instr(value.GetId()));
+                        auto &value = instr.GetParam<Value>(1);
+                        auto direct_access = host_regs->DirectSetHostReg(value.Def());
                         if (direct_access) {
-                            result->Disable(instr->GetId());
-                            host_regs->MarkDirectSetHostReg(value.GetId(), reg);
+                            instr.Disable();
+                            host_regs->MarkDirectSetHostReg(value.Def(), reg);
                         }
                     }
                     break;
                 }
                 case OpCode::SetVReg: {
-                    auto &reg = instr->GetParam<VReg>(0);
+                    auto &reg = instr.GetParam<VReg>(0);
                     if (host_regs->CastHostReg(reg)) {
-                        auto &value = instr->GetParam<Value>(1);
-                        auto direct_access = host_regs->DirectSetHostReg(&block->Instr(value.GetId()));
+                        auto &value = instr.GetParam<Value>(1);
+                        auto direct_access = host_regs->DirectSetHostReg(value.Def());
                         if (direct_access) {
-                            result->Disable(instr->GetId());
-                            host_regs->MarkDirectSetHostReg(value.GetId(), reg);
+                            instr.Disable();
+                            host_regs->MarkDirectSetHostReg(value.Def(), reg);
                         }
                     }
                     break;
                 }
                 case OpCode::GetReg: {
-                    auto &reg = instr->GetParam<Reg>(0);
+                    auto &reg = instr.GetParam<Reg>(0);
                     if (host_regs->CastHostReg(reg)) {
                         bool can_get_disable{true};
-                        for (auto use : instr->GetUses()) {
-                            auto &use_reg_instr = block->Instr(use);
-                            auto index = use_reg_instr.GetIndex(instr->GetReturn().Get<Value>());
-                            if (!host_regs->DirectGetHostReg(&use_reg_instr, *index)) {
+                        for (auto use : instr.GetUses()) {
+                            auto index = use->GetIndex(instr.GetReturn().Get<Value>());
+                            if (!host_regs->DirectGetHostReg(use, *index)) {
                                 can_get_disable = false;
                             }
                         }
                         if (can_get_disable) {
-                            result->Disable(instr->GetId());
-                            host_regs->MarkDirectGetHostReg(instr->GetId(), reg);
+                            instr.Disable();
+                            host_regs->MarkDirectGetHostReg(&instr, reg);
                         }
                     }
                     break;
                 }
                 case OpCode::GetVReg: {
-                    auto &reg = instr->GetParam<VReg>(0);
+                    auto &reg = instr.GetParam<VReg>(0);
                     if (host_regs->CastHostReg(reg)) {
                         bool can_get_disable{true};
-                        for (auto use : instr->GetUses()) {
-                            auto &use_reg_instr = block->Instr(use);
-                            auto index = use_reg_instr.GetIndex(instr->GetReturn().Get<Value>());
-                            if (!host_regs->DirectGetHostReg(&use_reg_instr, *index)) {
+                        for (auto use : instr.GetUses()) {
+                            auto index = use->GetIndex(instr.GetReturn().Get<Value>());
+                            if (!host_regs->DirectGetHostReg(use, *index)) {
                                 can_get_disable = false;
                             }
                         }
                         if (can_get_disable) {
-                            result->Disable(instr->GetId());
-                            host_regs->MarkDirectGetHostReg(instr->GetId(), reg);
+                            instr.Disable();
+                            host_regs->MarkDirectGetHostReg(&instr, reg);
                         }
                     }
                     break;
@@ -95,78 +93,76 @@ namespace Svm::IR {
 
     void CtxGetSetElimination::FilterRegUseForOldVer(IRBlock *block, OptResult *result, OptHostReg *host_regs) {
         auto &instr_seq = block->Sequence();
-        for (auto instr : instr_seq) {
-            switch (instr->GetOpCode()) {
+        for (auto &instr : instr_seq) {
+            switch (instr.GetOpCode()) {
                 case OpCode::SetReg: {
-                    auto &reg = instr->GetParam<Reg>(0);
+                    auto &reg = instr.GetParam<Reg>(0);
                     if (host_regs->CastHostReg(reg)) {
-                        auto &value = instr->GetParam<Value>(1);
-                        SetValue(reg, value.GetId());
-                        auto &value_from = block->Instr(value.GetId());
-                        if (value_from.GetUses().size() != 1) {
-                            skip_instructions.emplace(instr->GetId());
+                        auto &value = instr.GetParam<Value>(1);
+                        SetValue(reg, value.Def());
+                        auto value_from = value.Def();
+                        if (value_from->GetUses().size() != 1) {
+                            skip_instructions.emplace(&instr);
                         }
                     }
                     break;
                 }
                 case OpCode::SetVReg: {
-                    auto &reg = instr->GetParam<VReg>(0);
+                    auto &reg = instr.GetParam<VReg>(0);
                     if (host_regs->CastHostReg(reg)) {
-                        auto &value = instr->GetParam<Value>(1);
-                        SetValue(reg, value.GetId());
-                        auto &value_from = block->Instr(value.GetId());
-                        if (value_from.GetUses().size() != 1) {
-                            skip_instructions.emplace(instr->GetId());
+                        auto &value = instr.GetParam<Value>(1);
+                        SetValue(reg, &instr);
+                        auto value_from = value.Def();
+                        if (value_from->GetUses().size() != 1) {
+                            skip_instructions.emplace(&instr);
                         }
                     }
                     break;
                 }
                 case OpCode::GetReg: {
-                    auto &reg = instr->GetParam<Reg>(0);
+                    auto &reg = instr.GetParam<Reg>(0);
                     if (host_regs->CastHostReg(reg)) {
-                        host_regs_versions[instr->GetId()] = GetValue(reg);
+                        host_regs_versions[&instr] = GetValue(reg);
                     }
                     break;
                 }
                 case OpCode::GetVReg: {
-                    auto &reg = instr->GetParam<VReg>(0);
+                    auto &reg = instr.GetParam<VReg>(0);
                     if (host_regs->CastHostReg(reg)) {
-                        host_regs_versions[instr->GetId()] = GetValue(reg);
+                        host_regs_versions[&instr] = GetValue(reg);
                     }
                     break;
                 }
                 default: {
                     for (u8 i = 0; i < MAX_OPERANDS; ++i) {
-                        auto &op = instr->GetOperand(i);
+                        auto &op = instr.GetOperand(i);
                         if (op.IsValue()) {
-                            auto id = op.Get<Value>().GetId();
-                            auto &value_from = block->Instr(id);
-                            if (value_from.GetOpCode() == OpCode::GetReg) {
+                            auto value_from = op.Get<Value>().Def();
+                            if (value_from->GetOpCode() == OpCode::GetReg) {
                                 // check if use old host register version
-                                auto cur_value = GetValue(value_from.GetParam<Reg>(0));
-                                if (host_regs_versions[value_from.GetId()] != cur_value) {
-                                    skip_instructions.emplace(id);
-                                    skip_instructions.emplace(instr->GetId());
+                                auto cur_value = GetValue(value_from->GetParam<Reg>(0));
+                                if (host_regs_versions[value_from] != cur_value) {
+                                    skip_instructions.emplace(value_from);
+                                    skip_instructions.emplace(&instr);
                                 }
-                            } else if (value_from.GetOpCode() == OpCode::GetVReg) {
+                            } else if (value_from->GetOpCode() == OpCode::GetVReg) {
                                 // check if use old host register version
-                                auto cur_value = GetValue(value_from.GetParam<VReg>(0));
-                                if (host_regs_versions[value_from.GetId()] != cur_value) {
-                                    skip_instructions.emplace(id);
-                                    skip_instructions.emplace(instr->GetId());
+                                auto cur_value = GetValue(value_from->GetParam<VReg>(0));
+                                if (host_regs_versions[value_from] != cur_value) {
+                                    skip_instructions.emplace(value_from);
+                                    skip_instructions.emplace(&instr);
                                 }
                             }
                         } else if (op.IsAddress()) {
                             auto &address = op.Get<Address>();
                             if (!address.IsConst()) {
-                                auto id = address.ValueAddress().GetId();
-                                auto &value_from = block->Instr(id);
-                                if (value_from.GetOpCode() == OpCode::GetReg) {
+                                auto value_from = address.ValueAddress().Def();
+                                if (value_from->GetOpCode() == OpCode::GetReg) {
                                     // check if use old host register version
-                                    auto cur_value = GetValue(value_from.GetParam<Reg>(0));
-                                    if (host_regs_versions[value_from.GetId()] != cur_value) {
-                                        skip_instructions.emplace(id);
-                                        skip_instructions.emplace(instr->GetId());
+                                    auto cur_value = GetValue(value_from->GetParam<Reg>(0));
+                                    if (host_regs_versions[value_from] != cur_value) {
+                                        skip_instructions.emplace(value_from);
+                                        skip_instructions.emplace(&instr);
                                     }
                                 }
                             }
@@ -178,8 +174,8 @@ namespace Svm::IR {
         }
     }
 
-    bool CtxGetSetElimination::ShouldSkip(u32 id) {
-        return skip_instructions.find(id) != skip_instructions.end();
+    bool CtxGetSetElimination::ShouldSkip(Instruction* inst) {
+        return skip_instructions.find(inst) != skip_instructions.end();
     }
 
 }

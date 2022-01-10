@@ -136,7 +136,7 @@ namespace Svm {
     }
 
     SharedPtr<IR::IRBlock> JitRuntime::NewIRBlock(VAddr base) {
-        return ir_blocks_lru.New(base);
+        return ir_blocks_lru.New(base, &ir_instr_heap);
     }
 
     VAddr JitRuntime::GetBlockCodeCache(BasicBlock *cache) {
@@ -231,8 +231,9 @@ namespace Svm {
         ASSERT(ir_block);
 
         {
+            SharedLock<SharedMutex> guard(ir_block->Lock());
             // prepare interp stack
-            auto reg_size = ir_block->Instructions()->size();
+            auto reg_size = ir_block->Sequence().size();
             void *interp_stack{};
             if (reg_size < 0x1000) {
                 interp_stack = alloca(reg_size * sizeof(IR::IRReg));

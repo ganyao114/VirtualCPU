@@ -31,7 +31,7 @@ break;
         } else {
             memory32 = &runtime->GetMemory32();
         }
-        auto reg_size = ir_block->Instructions()->size();
+        auto reg_size = ir_block->Sequence().size();
         if (!stack) {
             stack = malloc(reg_size * sizeof(IRReg));
             interp_stack_mem = stack;
@@ -57,7 +57,7 @@ break;
     void Interpreter::Run() {
         auto cur_ir = ir_block->Sequence().begin();
         while (cur_ir != ir_block->Sequence().end()) {
-            current = *cur_ir;
+            current = &*cur_ir;
 
             // skip to label
             if (skip_to_id) {
@@ -85,7 +85,7 @@ break;
                 }
                 case IR::OpCode::BranchBool: {
                     if (V(current->GetParam<Value>(0)).Get<bool>()) {
-                        skip_to_id = current->GetParam<Label>(1).GetId();
+                        skip_to_id = current->GetParam<Label>(1).Ref()->GetId();
                     }
                     break;
                 }

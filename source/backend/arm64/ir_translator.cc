@@ -34,9 +34,9 @@ break;
     void IRCommitA64::Translate() {
         auto cur_ir = block->Sequence().begin();
         while (cur_ir != block->Sequence().end()) {
-            current = *cur_ir;
+            current = &*cur_ir;
             context->TickIR(current->GetId());
-            if (opt_result->IsEnable(current->GetId())) {
+            if (current->Enabled()) {
                 switch (current->GetOpCode()) {
                     case IR::OpCode::AdvancePC: {
                         block_offset += current->GetParam<IR::Imm>(0).Value<u32>();
@@ -45,7 +45,7 @@ break;
                     }
                     case IR::OpCode::BindLabel: {
                         auto &ir_label = current->GetParam<IR::Label>(0);
-                        __ Bind(GetLabel(ir_label.id));
+                        __ Bind(GetLabel(ir_label.Ref()->GetId()));
                         break;
                     }
                     case IR::OpCode::BranchCond:
@@ -55,7 +55,7 @@ break;
                         auto &bool_val = current->GetParam<IR::Value>(0);
                         auto &ir_label = current->GetParam<IR::Label>(1);
                         auto reg = reg_mng->GetValueRegister(bool_val);
-                        __ Cbnz(reg, GetLabel(ir_label.id));
+                        __ Cbnz(reg, GetLabel(ir_label.Ref()->GetId()));
                         break;
                     }
 
@@ -132,7 +132,7 @@ break;
         }
 
         auto expr_fold = opt_result->GetOptValueFold();
-        auto op = expr_fold->GetFoldOperand(value.GetId());
+        auto op = expr_fold->GetFoldOperand(value.Def());
 
         if (!op) {
             return {};
@@ -275,12 +275,11 @@ break;
         return false;
     }
 
-    void IRCommitA64::MarkFold(u32 value_src_id, Set<u32> &dest_instr_set) {
-        OptValueFold::MarkFold(value_src_id, dest_instr_set);
+    void IRCommitA64::MarkFold(IR::Instruction *value_src, Set<IR::Instruction *> &dest_instr_set) {
     }
 
-    IR::OptValueFold::Op *IRCommitA64::GetFoldOperand(u32 value_src_id) {
-        return OptValueFold::GetFoldOperand(value_src_id);
+    IR::OptValueFold::Op *IRCommitA64::GetFoldOperand(IR::Instruction *value_src) {
+        return OptValueFold::GetFoldOperand(value_src);
     }
 
     A64IROptResult::A64IROptResult(IRCommitA64 *commit_a64) : commit_a64(commit_a64) {

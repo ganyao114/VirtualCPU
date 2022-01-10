@@ -22,26 +22,26 @@ namespace Svm::IR {
         return false;
     }
 
-    void OptHostReg::MarkDirectSetHostReg(u32 instr_id, IR::Reg &reg) {
+    void OptHostReg::MarkDirectSetHostReg(Instruction *instr, IR::Reg &reg) {
     }
 
-    void OptHostReg::MarkDirectSetHostReg(u32 instr_id, IR::VReg &reg) {
+    void OptHostReg::MarkDirectSetHostReg(Instruction *instr, IR::VReg &reg) {
     }
 
-    void OptHostReg::MarkDirectGetHostReg(u32 instr_id, VReg &reg) {
+    void OptHostReg::MarkDirectGetHostReg(Instruction *instr, VReg &reg) {
     }
 
-    void OptHostReg::MarkDirectGetHostReg(u32 instr_id, IR::Reg &reg) {
+    void OptHostReg::MarkDirectGetHostReg(Instruction *instr, IR::Reg &reg) {
     }
 
     bool OptValueFold::CouldFold(Instruction *dest, Instruction *src) {
         return false;
     }
 
-    void OptValueFold::MarkFold(u32 value_src_id, Set<u32> &dest_instr_set) {
+    void OptValueFold::MarkFold(Instruction *value_src, Set<Instruction*> &dest_instr_set) {
     }
 
-    OptValueFold::Op *OptValueFold::GetFoldOperand(u32 value_src_id) {
+    OptValueFold::Op *OptValueFold::GetFoldOperand(Instruction *value_src) {
         return {};
     }
 
@@ -71,14 +71,6 @@ namespace Svm::IR {
 
     void OptFlagsSync::FlagsCanNotSync(Flags &flag) {
 
-    }
-
-    void OptResult::Disable(u32 id) {
-        disables.emplace(id);
-    }
-
-    void OptResult::Enable(u32 id) {
-        disables.erase(id);
     }
 
     OptHostReg *OptResult::GetOptHostReg() {

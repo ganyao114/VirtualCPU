@@ -6,6 +6,8 @@
 
 #include "instruction.h"
 #include <base/lru_container.h>
+#include <base/object_pool.h>
+#include <base/slab_alloc.h>
 
 namespace Svm::IR {
 
@@ -44,8 +46,44 @@ namespace Svm::IR {
         Imm dead_addr;
     };
 
-    using InstrSequence = List<Instruction*>;
-    using InstrContainer = Map<u32, Instruction>;
+    class InstrContainer : CopyDisable {
+    public:
+
+        explicit InstrContainer() = default;
+
+        explicit InstrContainer(ObjectPool<Instruction> *instr_pool) : instr_pool{instr_pool} {};
+
+        explicit InstrContainer(SlabHeap<Instruction> *instr_slab) : instr_slab{instr_slab} {};
+
+        constexpr Instruction *Create(OpCode op) {
+            if (instr_pool) {
+                return instr_pool->Create(op);
+            }
+            if (instr_slab) {
+                auto res = instr_slab->New(op);
+                if (res) {
+                    return res;
+                }
+            }
+            return &instr_list.emplace_back(op);
+        }
+
+        constexpr void Destroy(Instruction *instr) {
+            if (instr_pool) {
+                return;
+            }
+            if (instr_slab && instr_slab->Contains(reinterpret_cast<uintptr_t>(instr))) {
+                return instr_slab->Delete(instr);
+            }
+        }
+
+    private:
+        SlabHeap<Instruction> *instr_slab{};
+        ObjectPool<Instruction> *instr_pool{};
+        List<Instruction> instr_list{};
+    };
+
+    using InstrSequence = intrusive_list<Instruction, &Instruction::node>;
 
     constexpr IR::Cond FlipCond(IR::Cond cond) {
         switch (cond) {
@@ -91,8 +129,14 @@ namespace Svm::IR {
     public:
 
         explicit IRBlock();
-        
+
         explicit IRBlock(VAddr pc);
+
+        explicit IRBlock(VAddr pc, ObjectPool<Instruction> *pool);
+
+        explicit IRBlock(VAddr pc, SlabHeap<Instruction> *heap);
+
+        ~IRBlock();
 
         enum TerminalType : u8 {
             DEAD_END,
@@ -114,7 +158,7 @@ namespace Svm::IR {
 
         void BindLabel(IR::Label *label);
 
-        void LinkLabel(IR::Label *label, u32 id);
+        void LinkLabel(IR::Label *label, Instruction *instr);
 
         void Terminal();
 
@@ -162,37 +206,27 @@ namespace Svm::IR {
             return dead_end;
         }
 
-        Instruction *Emit(const Instruction& instr) {
-            auto id = instructions->size() + 1;
-            Instruction *instr_ptr = &instructions->emplace(id, instr).first->second;
-            instr_ptr->SetId(id);
-            auto &ret = instr_ptr->GetReturn();
-            if (ret.IsValue()) {
-                ret.Get<Value>().id = id;
-            }
-            DefaultRetSize(instr_ptr);
-            instr_sequence.push_back(instr_ptr);
-            return instr_ptr;
-        }
-
         template <typename Ret>
         Ret &Emit(OpCode opcode, std::initializer_list<Operand> args) {
-            auto id = instructions->size() + 1;
-            Instruction *instr_ptr = &instructions->emplace(id, opcode).first->second;
-            instr_ptr->SetId(id);
-            instr_ptr->SetReturn<Ret>(id);
+            Instruction *instr_ptr = instructions->Create(opcode);
+            instr_ptr->InitRet<Ret>();
+            instr_ptr->SetId(instr_sequence.size());
             std::for_each(args.begin(), args.end(), [instr_ptr, index = size_t(0)](const auto& arg) mutable {
                 instr_ptr->SetParam(index, arg);
                 index++;
             });
-            instr_sequence.push_back(instr_ptr);
+            instr_sequence.push_back(*instr_ptr);
             DefaultRetSize(instr_ptr);
             return instr_ptr->GetReturn().Get<Ret>();
         }
 
-        Instruction &Instr(u32 id);
+        void RemoveInstr(Instruction *instr);
 
-        void RemoveInstr(u32 id);
+        void IndexInstructions();
+
+        void ClearIndexes();
+
+        Instruction &Instr(u32 index);
 
         constexpr InstrSequence &Sequence() {
             return instr_sequence;
@@ -214,6 +248,10 @@ namespace Svm::IR {
             return pc >= start_pc && pc < (start_pc + current_offset);
         }
 
+        constexpr SharedMutex &Lock() {
+            return lock;
+        }
+
         bool Split(const SharedPtr<IRBlock> &new_block, u32 offset);
 
         void EndBlock();
@@ -233,8 +271,8 @@ namespace Svm::IR {
         VAddr start_pc{};
         u32 current_offset{0};
         SharedPtr<InstrContainer> instructions;
-        UnorderedMap<IR::Label*, Set<u32>> pending_labels;
-        Map<u32, u32> guest_offset_to_ir;
+        UnorderedMap<IR::Label*, Set<Instruction*>> pending_labels;
+        Vector<Instruction*> instr_indexes;
         InstrSequence instr_sequence;
         Instruction terminal_instr{TERMINAL_INSTR_ID, OpCode::Terminal};
         union {
@@ -245,6 +283,7 @@ namespace Svm::IR {
         };
         TerminalType terminal_type;
         TerminalReason terminal_reason{BRANCH};
+        SharedMutex lock{};
     };
 
 }

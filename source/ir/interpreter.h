@@ -182,7 +182,7 @@ namespace Svm::IR {
         }
 
         constexpr IRReg &V(IR::Value &value) {
-            return regs[value.GetId()];
+            return regs[value.Def()->GetId()];
         }
 
         constexpr IRReg &Ret(Instruction *instr) {
