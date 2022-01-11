@@ -225,7 +225,7 @@ namespace Svm {
         }
 
         constexpr bool empty() {
-            return ptr_;
+            return !ptr_;
         }
 
         constexpr difference_type operator-(const list_iterator &rhs) { return ptr_ - rhs.ptr_; }
@@ -497,5 +497,14 @@ namespace Svm {
         const_iterator end() const { return const_iterator{&tail_}; }
 
         const_iterator cend() const { return end(); }
+
+        void split(intrusive_list<value_type, node_ptr> &new_list, iterator &itr) {
+            value_type *back_{};
+            while (back_ != &*itr) {
+                back_ = &back();
+                pop_back();
+                new_list.push_back(*back_);
+            }
+        }
     };
 } // namespace Svm

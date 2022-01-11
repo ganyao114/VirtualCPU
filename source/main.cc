@@ -12,6 +12,7 @@
 #include <platform/memory.h>
 #include <libc.h>
 #include <thread>
+#include <frontend/function_disam.h>
 #include "base/object_pool.h"
 
 using namespace Svm::X86;
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
     printf("OFFSET_CODE_CACHE: %lu \n", OFF_HELP(code_cache));
 
 
-    //auto res = Svm::BuildFunction(pc, nullptr);
+    auto res = Svm::BuildFunction(pc, nullptr);
 
     auto test_code_page = static_cast<Svm::u8 *>(Svm::Platform::MapCowMemory(0x1000));
     auto test_rw_page = static_cast<Svm::u8 *>(Svm::Platform::MapCowMemory(0x1000));
@@ -97,7 +98,7 @@ int main(int argc, char *argv[]) {
     configs.rsb_cache = false;
     configs.page_align_check = false;
     configs.page_bits = 12;
-    configs.address_width = 36;
+    configs.address_width = 38;
 
     Svm::SvmInstance instance(configs);
 

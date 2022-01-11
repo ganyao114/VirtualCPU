@@ -80,37 +80,39 @@ namespace Svm::IR {
     }
 
     bool IRBlock::Split(const SharedPtr<IRBlock> &new_block, u32 offset) {
-//        for (auto &) {
-//
-//        }
-//        auto itr = guest_offset_to_ir.find(offset);
-//        if (itr == guest_offset_to_ir.end()) {
-//            return false;
-//        }
-//        auto inst_index = itr->second;
-//        auto new_start = std::next(instr_sequence.begin(), inst_index);
-//        new_block->instructions = instructions;
-////        new_block->instr_sequence.splice(new_block->instr_sequence.begin(), instr_sequence, new_start, instr_sequence.end());
-//        new_block->start_pc = start_pc + offset;
-//        new_block->current_offset = current_offset - offset;
-//        new_block->terminal_type = terminal_type;
-//        new_block->terminal_reason = terminal_reason;
-//        current_offset = offset;
-//        switch (terminal_type) {
-//            case DIRECT:
-//                new_block->direct_terminal = direct_terminal;
-//                break;
-//            case CHECK_BOOL:
-//                new_block->check_bool = check_bool;
-//                break;
-//            case CHECK_COND:
-//                new_block->check_cond = check_cond;
-//                break;
-//            case DEAD_END:
-//                break;
-//        }
-//        Terminal(Direct{Imm(start_pc + offset)});
-//        terminal_reason = SPLIT;
+        auto itr = instr_sequence.begin();
+        u32 cur_offset{0};
+        for (; !itr.empty(); itr++) {
+            auto &instr = *itr;
+            if (instr.GetOpCode() == OpCode::AdvancePC) {
+                cur_offset += instr.GetParam<Imm>(0).Value<u32>();
+            }
+            if (cur_offset == offset) {
+                break;
+            }
+        }
+        instr_sequence.split(new_block->instr_sequence, itr);
+        new_block->instructions = instructions;
+        new_block->start_pc = start_pc + offset;
+        new_block->current_offset = current_offset - offset;
+        new_block->terminal_type = terminal_type;
+        new_block->terminal_reason = terminal_reason;
+        current_offset = offset;
+        switch (terminal_type) {
+            case DIRECT:
+                new_block->direct_terminal = direct_terminal;
+                break;
+            case CHECK_BOOL:
+                new_block->check_bool = check_bool;
+                break;
+            case CHECK_COND:
+                new_block->check_cond = check_cond;
+                break;
+            case DEAD_END:
+                break;
+        }
+        Terminal(Direct{Imm(start_pc + offset)});
+        terminal_reason = SPLIT;
         return true;
     }
 
