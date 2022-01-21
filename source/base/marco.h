@@ -72,7 +72,7 @@ namespace Svm {
     using Ms = std::chrono::milliseconds;
 
     template<unsigned bits>
-    using BitSet = std::bitset<bits>;
+    using Bitset = std::bitset<bits>;
 
     template<typename T>
     using Queue = std::queue<T>;

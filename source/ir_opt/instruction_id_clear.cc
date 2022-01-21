@@ -6,7 +6,6 @@
 
 namespace Svm::IR {
 
-
     void InstrIdClear::Optimize(IRBlock *block, OptResult *result) {
         block->IndexInstructions();
     }

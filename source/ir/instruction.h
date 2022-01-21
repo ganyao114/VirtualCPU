@@ -26,7 +26,6 @@ namespace Svm::IR {
 #define INST2(x, ...) x,
 #define INST3(x, ...) x,
 #define INST4(x, ...) x,
-#define Type(x)
 
 #include "instr_table.ir"
 
@@ -35,7 +34,6 @@ namespace Svm::IR {
 #undef INST2
 #undef INST3
 #undef INST4
-#undef Type
         COUNT
     };
 

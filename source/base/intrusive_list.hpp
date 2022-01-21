@@ -503,7 +503,7 @@ namespace Svm {
             while (back_ != &*itr) {
                 back_ = &back();
                 pop_back();
-                new_list.push_back(*back_);
+                new_list.push_front(*back_);
             }
         }
     };

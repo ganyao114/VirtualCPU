@@ -8,7 +8,7 @@
 
 
 .align  4
-.globl cdecl(__svm_save_host_callee)
+.global cdecl(__svm_save_host_callee)
 cdecl(__svm_save_host_callee):
     stp x19, x20, [sp, #-16]!
     stp x21, x22, [sp, #-16]!
@@ -23,7 +23,7 @@ cdecl(__svm_save_host_callee):
     ret
 
 .align  4
-.globl cdecl(__svm_restore_host_callee)
+.global cdecl(__svm_restore_host_callee)
 cdecl(__svm_restore_host_callee):
     ldp q14, q15, [sp], 32
     ldp q12, q13, [sp], 32
@@ -38,7 +38,7 @@ cdecl(__svm_restore_host_callee):
     ret
 
 .align  4
-.globl cdecl(__svm_save_host_caller)
+.global cdecl(__svm_save_host_caller)
 cdecl(__svm_save_host_caller):
     stp x1, x2,   [sp, #-16]!
     stp x3, x4,   [sp, #-16]!
@@ -57,7 +57,7 @@ cdecl(__svm_save_host_caller):
     ret
 
 .align  4
-.globl cdecl(__svm_restore_host_caller)
+.global cdecl(__svm_restore_host_caller)
 cdecl(__svm_restore_host_caller):
     ldp q6, q7,   [sp], 32
     ldp q4, q5,   [sp], 32
@@ -76,7 +76,7 @@ cdecl(__svm_restore_host_caller):
     ret
 
 .align  4
-.globl cdecl(__svm_save_guest_register_x64)
+.global cdecl(__svm_save_guest_register_x64)
 cdecl(__svm_save_guest_register_x64):
     str REG_STATUS, [REG_CTX, OFFSET_X64_STATUS]
     mov REG_IP, REG_CTX
@@ -101,7 +101,7 @@ cdecl(__svm_save_guest_register_x64):
 
 
 .align  4
-.globl cdecl(__svm_restore_guest_register_x64)
+.global cdecl(__svm_restore_guest_register_x64)
 cdecl(__svm_restore_guest_register_x64):
     ldr REG_STATUS, [REG_CTX, OFFSET_X64_STATUS]
     mov REG_IP, REG_CTX
@@ -125,7 +125,7 @@ cdecl(__svm_restore_guest_register_x64):
     ret
 
 .align  4
-.globl cdecl(__svm_interrupt_trampoline_x64)
+.global cdecl(__svm_interrupt_trampoline_x64)
 cdecl(__svm_interrupt_trampoline_x64):
     stp x29, x30, [sp, #-16]!
     bl  cdecl(__svm_save_guest_register_x64)
@@ -151,7 +151,7 @@ label_end:
 
 
 .align  4
-.globl cdecl(__svm_code_run_entry_x64)
+.global cdecl(__svm_code_run_entry_x64)
 cdecl(__svm_code_run_entry_x64):
     stp x29, x30, [sp, #-16]!
     bl cdecl(__svm_save_host_callee)
@@ -175,7 +175,7 @@ cdecl(__svm_code_run_entry_x64):
 
 
 .align  4
-.globl cdecl(__svm_call_host_trampoline)
+.global cdecl(__svm_call_host_trampoline)
 cdecl(__svm_call_host_trampoline):
     stp x29, x30, [sp, #-16]!
     bl  cdecl(__svm_save_host_caller)
@@ -192,7 +192,7 @@ cdecl(__svm_call_host_trampoline):
 
 
 .align  4
-.globl cdecl(__svm_cache_miss_trampoline)
+.global cdecl(__svm_cache_miss_trampoline)
 cdecl(__svm_cache_miss_trampoline):
     stp x29, x30, [sp, #-16]!
     bl  cdecl(__svm_save_host_caller)
@@ -217,7 +217,7 @@ label_end_cache:
 
 
 .align  4
-.globl cdecl(__svm_bind_cache_trampoline)
+.global cdecl(__svm_bind_cache_trampoline)
 cdecl(__svm_bind_cache_trampoline):
     stp x29, x30, [sp, #-16]!
     bl  cdecl(__svm_save_host_caller)
@@ -242,7 +242,7 @@ label_end_bind:
 
 
 .align  4
-.globl cdecl(__svm_return_to_host)
+.global cdecl(__svm_return_to_host)
 cdecl(__svm_return_to_host):
     ret
 

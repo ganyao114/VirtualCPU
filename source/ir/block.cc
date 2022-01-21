@@ -83,12 +83,12 @@ namespace Svm::IR {
         auto itr = instr_sequence.begin();
         u32 cur_offset{0};
         for (; !itr.empty(); itr++) {
+            if (cur_offset == offset) {
+                break;
+            }
             auto &instr = *itr;
             if (instr.GetOpCode() == OpCode::AdvancePC) {
                 cur_offset += instr.GetParam<Imm>(0).Value<u32>();
-            }
-            if (cur_offset == offset) {
-                break;
             }
         }
         instr_sequence.split(new_block->instr_sequence, itr);
@@ -257,6 +257,8 @@ namespace Svm::IR {
                 break;
             case OpCode::ZeroExtend:
                 size = instr->GetParam<Size>(1);
+                break;
+            default:
                 break;
         }
         if (size != VOID) {

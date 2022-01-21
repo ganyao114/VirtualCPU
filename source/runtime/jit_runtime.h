@@ -253,7 +253,7 @@ namespace Svm {
         SlabHeap<IR::Instruction> ir_instr_heap{0x100000};
 
         UserConfigs configs;
-        std::set<VCpu*> cores;
+        Set<VCpu*> cores;
 
         // trampolines
         CPUContext *(*run_code_trampoline)(CPUContext *);

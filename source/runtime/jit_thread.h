@@ -14,7 +14,7 @@ namespace Svm {
     public:
         using Task = Function<void ()>;
 
-        explicit JitThread(const int thread_count);
+        explicit JitThread(int thread_count);
 
         ~JitThread();
 

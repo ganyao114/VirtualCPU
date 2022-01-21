@@ -15,7 +15,7 @@ namespace Svm::IR {
             auto &pte = memory64->GetPTE(addr >> memory64->page_bits);
             return pte.Readable() && !pte.Writeable();
         } else {
-            auto &pte = memory32->GetPTE(addr >> memory64->page_bits);
+            auto &pte = memory32->GetPTE(addr >> memory32->page_bits);
             return pte.Readable() && !pte.Writeable();
         }
     }

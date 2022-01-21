@@ -95,12 +95,12 @@ namespace Svm::IR {
     };
 
     struct Void {
-        explicit Void() {};
+        explicit Void() = default;;
     };
 
     struct Reg {
 
-        explicit Reg() {};
+        explicit Reg() = default;;
         
         explicit Reg(u8 code) : code{code} {}
         
@@ -136,7 +136,7 @@ namespace Svm::IR {
 
     struct VReg {
         
-        explicit VReg() {};
+        explicit VReg() = default;;
         
         explicit VReg(auto code) : code{code} {}
         
@@ -197,7 +197,7 @@ namespace Svm::IR {
         constexpr Address(const Imm &addr) : address{addr} {};
         constexpr Address(const Value &addr) : address{addr} {};
 
-        constexpr bool IsConst() const {
+        [[nodiscard]] constexpr bool IsConst() const {
             return std::holds_alternative<Imm>(address);
         }
 

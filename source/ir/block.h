@@ -49,7 +49,7 @@ namespace Svm::IR {
     class InstrContainer : CopyDisable {
     public:
 
-        explicit InstrContainer() = default;
+        explicit InstrContainer() : instr_list{} {};
 
         explicit InstrContainer(ObjectPool<Instruction> *instr_pool) : instr_pool{instr_pool} {};
 
@@ -80,7 +80,7 @@ namespace Svm::IR {
     private:
         SlabHeap<Instruction> *instr_slab{};
         ObjectPool<Instruction> *instr_pool{};
-        List<Instruction> instr_list{};
+        List<Instruction> instr_list;
     };
 
     using InstrSequence = intrusive_list<Instruction, &Instruction::node>;

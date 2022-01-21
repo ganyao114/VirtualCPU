@@ -175,8 +175,8 @@ namespace Svm::A64 {
         u32 current_ir_id{0};
         CpuArch arch;
         IR::IRBlock *block{};
-        BitSet<31> general_register_in_use;
-        BitSet<31> vector_register_in_use;
+        Bitset<31> general_register_in_use;
+        Bitset<31> vector_register_in_use;
         Vector<Map<u16, u16>> reg_live_interval;
         Vector<Map<u16, u16>> vreg_live_interval;
         Map<u32, const Register> registers_allocated;

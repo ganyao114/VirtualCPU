@@ -457,7 +457,6 @@ namespace Svm::A64 {
         auto &ctx = reg_mng.Context();
         __ Mov(ip, va);
         Store<VAddr>(ip, MemOperand(ctx, reg_mng.PCOffset()));
-        CheckHalt();
         auto [base, block] = runtime->GetBlockCache(va);
         VAddr cache;
         if (block->BoundModule()) {
@@ -495,7 +494,6 @@ namespace Svm::A64 {
         auto &ctx = reg_mng.Context();
         // store pc
         Store<VAddr>(va, MemOperand(ctx, reg_mng.PCOffset()));
-        CheckHalt();
         auto miss_cache = label_alloc.AllocLabel();
         auto &pa = reg_mng.IP();
         if (check_rsb && configs->rsb_cache) {

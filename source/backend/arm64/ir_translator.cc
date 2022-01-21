@@ -32,6 +32,7 @@ break;
 
 
     void IRCommitA64::Translate() {
+        context->CheckHalt();
         auto cur_ir = block->Sequence().begin();
         while (cur_ir != block->Sequence().end()) {
             current = &*cur_ir;
