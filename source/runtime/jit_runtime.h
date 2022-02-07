@@ -6,8 +6,8 @@
 
 #include <base/lru_container.h>
 #include <cache/dispatcher_table.h>
-#include <memory/memory_interface.h>
-#include <memory/page_table.h>
+#include <include/memory_interface.h>
+#include <runtime/page_table.h>
 #include <cache/cache_module.h>
 #include <cache/cache_pool.h>
 #include <include/configs.h>
@@ -23,8 +23,7 @@ namespace Svm {
     using namespace Cache;
     using namespace Memory;
 
-    using PageTable32 = FlatPageTable<u32>;
-    using PageTable64 = FlatPageTable<u64>;
+    using PageTable = BasePageTable;
 
     using Dispatcher = DispatcherTable<u64>;
 
@@ -110,6 +109,10 @@ namespace Svm {
             state = static_cast<State>(REGISTERED_CACHE | BOUND_DISPATCHER);
         }
 
+        constexpr void RegisteredCache() {
+            state = REGISTERED_CACHE;
+        }
+
         constexpr ModuleInfo &GetModule() {
             return module_info;
         };
@@ -144,7 +147,7 @@ namespace Svm {
 
     constexpr auto max_cache_modules = 0x1000 / sizeof(void *);
 
-    class JitRuntime : public BaseObject, CopyDisable {
+    class JitRuntime : public Runtime, CopyDisable {
     public:
 
         explicit JitRuntime(UserConfigs &configs);
@@ -159,20 +162,20 @@ namespace Svm {
             return *dispatcher;
         }
 
-        constexpr bool Guest64Bit() {
+        constexpr bool Guest64Bit() const {
             return configs.guest_arch == CpuArch::X64 || configs.guest_arch == CpuArch::Arm64;
         }
 
-        constexpr CpuArch GuestArch() {
+        constexpr CpuArch GuestArch() override {
             return configs.guest_arch;
         }
 
-        constexpr PageTable32 &GetMemory32() {
-            return *page_table_32;
+        constexpr MemoryInterface &GetMemory() override {
+            return *page_table;
         }
 
-        constexpr PageTable64 &GetMemory64() {
-            return *page_table_64;
+        constexpr PageTable &GetPageTable() {
+            return *page_table;
         }
 
         constexpr BlockCache32 &GetCache32() {
@@ -205,9 +208,19 @@ namespace Svm {
 
         void *FindAndJit(VAddr va, bool fill_dispatcher = false);
 
+        void PutCodeCache(VAddr pc, PAddr cache) override;
+
+        PAddr GetCodeCache(VAddr pc) override;
+
+        PAddr FlushCodeCache(const u8 *buffer, size_t size) override;
+
+        void PushLinkPoint(VAddr target, PAddr link_point) override;
+
+        bool Static() override;
+
         BlockCacheRef GetBlockCache(VAddr addr);
 
-        VAddr GetBlockCodeCache(BasicBlock *cache);
+        PAddr GetBlockCodeCache(BasicBlock *cache);
 
         void PushBlock(VAddr block_start, bool recursive = true);
 
@@ -238,8 +251,7 @@ namespace Svm {
         void RunJitCache(CPUContext *context, void *cache);
 
         Mutex lock;
-        UniquePtr<PageTable32> page_table_32;
-        UniquePtr<PageTable64> page_table_64;
+        UniquePtr<PageTable> page_table;
         UniquePtr<BlockCache32> block_cache_32;
         UniquePtr<BlockCache64> block_cache_64;
         UniquePtr<Dispatcher> dispatcher;
@@ -257,6 +269,9 @@ namespace Svm {
 
         // trampolines
         CPUContext *(*run_code_trampoline)(CPUContext *);
+
+        // runtime link points
+        UnorderedMap<VAddr, List<PAddr>> pending_link_points;
     };
 
 }

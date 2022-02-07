@@ -206,8 +206,8 @@ namespace Svm::IR {
             return dead_end;
         }
 
-        template <typename Ret>
-        Ret &Emit(OpCode opcode, std::initializer_list<Operand> args) {
+        template <typename Ret, bool back = true>
+        Ret &Emit(OpCode opcode, const std::initializer_list<Operand> &args) {
             Instruction *instr_ptr = instructions->Create(opcode);
             instr_ptr->InitRet<Ret>();
             instr_ptr->SetId(instr_sequence.size());
@@ -215,7 +215,11 @@ namespace Svm::IR {
                 instr_ptr->SetParam(index, arg);
                 index++;
             });
-            instr_sequence.push_back(*instr_ptr);
+            if constexpr (back) {
+                instr_sequence.push_back(*instr_ptr);
+            } else {
+                instr_sequence.push_front(*instr_ptr);
+            }
             DefaultRetSize(instr_ptr);
             return instr_ptr->GetReturn().Get<Ret>();
         }
@@ -240,11 +244,11 @@ namespace Svm::IR {
             return start_pc;
         }
 
-        constexpr u32 BlockCodeSize() const {
+        constexpr u32 BlockSize() const {
             return current_offset;
         }
         
-        constexpr bool InBlock(VAddr pc) const {
+        constexpr bool Overlap(VAddr pc) const {
             return pc >= start_pc && pc < (start_pc + current_offset);
         }
 
@@ -252,11 +256,13 @@ namespace Svm::IR {
             return lock;
         }
 
-        bool Split(const SharedPtr<IRBlock> &new_block, u32 offset);
+        bool Split(IRBlock *new_block, u32 offset);
 
         void EndBlock();
 
         void PrepareOpt();
+
+        List<VAddr> NextBlocksAddress(bool include_call = false);
 
     private:
 

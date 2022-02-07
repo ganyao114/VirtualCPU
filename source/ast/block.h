@@ -7,56 +7,63 @@
 #include <base/marco.h>
 #include <ir/block.h>
 
-namespace Svm::Ast {
+namespace Svm {
 
-    class Graph;
-
-    class BasicBlock : public BaseObject, CopyDisable {
+    class Block : public BaseObject, CopyDisable {
     public:
 
-        explicit BasicBlock(Graph *graph, VAddr pc, u32 size);
+        explicit Block(ObjectPool<IR::Instruction> *pool, VAddr pc);
 
-        void AddPredecessor(BasicBlock* block);
+        void AddPredecessor(Block* block);
 
-        void AddSuccessor(BasicBlock* block);
+        void AddSuccessor(Block* block);
 
-        constexpr Vector<BasicBlock*> &Predecessors() {
+        constexpr std::list<Block*> &Predecessors() {
             return predecessors;
         }
 
-        constexpr Vector<BasicBlock*> &Successors() {
+        constexpr std::list<Block*> &Successors() {
             return predecessors;
         }
-        
-        constexpr void SetSize(u32 size) {
-            this->size = size;
-        }
 
-        constexpr void SetIRBlock(const SharedPtr<IR::IRBlock> &block) {
-            ir_block = block;
-        }
-
-        constexpr SharedPtr<IR::IRBlock> &GetIRBlock() {
+        constexpr IR::IRBlock &GetIRBlock() {
             return ir_block;
         }
         
         constexpr VAddr StartPC() const {
-            return block_start;
+            return ir_block.StartPC();
         }
         
-        constexpr bool InBlock(VAddr pc) const {
-            return pc >= block_start && pc < (block_start + size);
+        constexpr bool Overlap(VAddr pc) const {
+            return ir_block.Overlap(pc);
         }
 
+        constexpr void SetId(u32 id_) {
+            this->id = id_;
+        }
+
+        [[nodiscard]] constexpr u32 GetId() const {
+            return id;
+        }
+
+        constexpr bool operator==(const Block &rhs) const { return ir_block.StartPC() == rhs.ir_block.StartPC(); }
+
+        constexpr bool operator!=(const Block &rhs) const { return ir_block.StartPC() != rhs.ir_block.StartPC(); }
+
+        constexpr bool operator<(const Block &rhs) const { return ir_block.StartPC() < rhs.ir_block.StartPC(); }
+
+        constexpr bool operator>(const Block &rhs) const { return ir_block.StartPC() > rhs.ir_block.StartPC(); }
+
+        constexpr bool operator<=(const Block &rhs) const { return ir_block.StartPC() <= rhs.ir_block.StartPC(); }
+
+        constexpr bool operator>=(const Block &rhs) const { return ir_block.StartPC() >= rhs.ir_block.StartPC(); }
+
     private:
-        Graph *graph;
-        VAddr block_start;
-        u32 size;
-        Vector<BasicBlock*> predecessors;
-        Vector<BasicBlock*> successors;
-        BasicBlock* dominator;
-        List<BasicBlock*> dominated_blocks;
-        SharedPtr<IR::IRBlock> ir_block;
+        u32 id;
+        IR::IRBlock ir_block;
+        std::list<Block*> predecessors;
+        std::list<Block*> successors;
+        std::list<Block*> dominated_blocks;
     };
 
 }

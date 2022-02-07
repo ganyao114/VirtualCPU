@@ -9,7 +9,7 @@
 #include <asm/x86/64/registers_x86_64.h>
 #include <externals/distorm/decoder.h>
 #include <externals/distorm/mnemonics.h>
-#include <memory/memory_interface.h>
+#include <include/memory_interface.h>
 
 namespace Svm::Decoder {
 
@@ -185,7 +185,7 @@ namespace Svm::Decoder {
     class X64Decoder : public BaseDecoder {
     public:
 
-        X64Decoder(VAddr start, IR::Assembler *visitor, Memory::MemoryInterface<VAddr> *memory);
+        X64Decoder(VAddr start, IR::Assembler *visitor, Memory::MemoryInterface *memory);
 
         void Decode() override;
 
@@ -280,7 +280,7 @@ namespace Svm::Decoder {
         VAddr start;
         VAddr pc;
         IR::Assembler *visitor;
-        Memory::MemoryInterface<VAddr> *memory;
+        Memory::MemoryInterface *memory;
     };
 
 }

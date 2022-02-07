@@ -4,10 +4,13 @@
 
 #pragma once
 
-#include <base/marco.h>
+#include "types.h"
 #include "stdexcept"
+#include "variant"
 
 namespace Svm::Memory {
+
+    using VAddress = std::variant<u32, u64>;
 
     class MemoryException : public std::exception {
     public:
@@ -24,29 +27,28 @@ namespace Svm::Memory {
         VAddr addr;
     };
 
-    template <typename Addr>
     class MemoryInterface {
     public:
-        virtual void ReadMemory(const Addr src_addr, void *dest_buffer, const std::size_t size) = 0;
+        virtual void ReadMemory(const VAddress &src_addr, void *dest_buffer, size_t size) = 0;
 
-        virtual void WriteMemory(const Addr dest_addr, const void* src_buffer, const std::size_t size) = 0;
+        virtual void WriteMemory(const VAddress &dest_addr, const void* src_buffer, size_t size) = 0;
 
-        virtual std::optional<void *> GetPointer(Addr vaddr) = 0;
+        virtual std::optional<void *> GetPointer(const VAddress &vaddr) = 0;
 
         template <typename T>
-        T Read(Addr vaddr) {
+        T Read(const VAddress &vaddr) {
             T t;
             ReadMemory(vaddr, &t, sizeof(T));
             return std::move(t);
         }
 
         template <typename T>
-        void Write(Addr vaddr, const T &t) {
+        void Write(const VAddress &vaddr, const T &t) {
             WriteMemory(vaddr, &t, sizeof(T));
         }
 
         template <typename T>
-        T *Get(Addr vaddr) {
+        T *Get(const VAddress &vaddr) {
             auto point = GetPointer(vaddr);
             if (point) {
                 return reinterpret_cast<T*>(*point);
@@ -56,7 +58,7 @@ namespace Svm::Memory {
         }
 
         template <typename T>
-        bool AtomicCompareAndSwap(Addr vaddr, T value, T expected) {
+        bool AtomicCompareAndSwap(const VAddress &vaddr, T value, T expected) {
             auto volatile phy_point = Get<T>(vaddr);
             if (sizeof(T) == sizeof(u128)) {
                 unsigned __int128 value_a;

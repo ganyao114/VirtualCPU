@@ -13,17 +13,14 @@ namespace Svm::IR {
     class OptConstReadImpl : public OptConstRead {
     public:
 
-        explicit OptConstReadImpl(PageTable32 *memory32);
-
-        explicit OptConstReadImpl(PageTable64 *memory64);
+        explicit OptConstReadImpl(BasePageTable *memory);
 
         bool IsReadOnly(VAddr addr) override;
 
         Vector<u8> ReadMemory(VAddr addr, size_t size) override;
 
     private:
-        PageTable32 *memory32{};
-        PageTable64 *memory64{};
+        BasePageTable *memory{};
     };
 
     class ConstMemoryReadOpt : public IROptimize {

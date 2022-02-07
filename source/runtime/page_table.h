@@ -8,8 +8,8 @@
 #include <optional>
 #include <platform/memory.h>
 #include <base/cow_vector.h>
-#include "memory_interface.h"
-#include "page_entry.h"
+#include "include/memory_interface.h"
+#include "include/page_entry.h"
 
 namespace Svm::Memory {
 
@@ -25,11 +25,10 @@ namespace Svm::Memory {
         const VAddr page_mask;
     };
 
-    template<typename Addr>
-    class PageTable : public PageTableConst, public MemoryInterface<Addr>, BaseObject, CopyDisable {
+    class BasePageTable : public PageTableConst, public MemoryInterface, CopyDisable {
     public:
 
-        explicit PageTable(const u8 addr_witdh, const u8 page_bits) : PageTableConst(addr_witdh, page_bits) {
+        explicit BasePageTable(const u8 addr_witdh, const u8 page_bits) : PageTableConst(addr_witdh, page_bits) {
             page_table_entries = 1ULL << (addr_width - page_bits);
         }
 
@@ -45,7 +44,7 @@ namespace Svm::Memory {
 
         virtual void UnmapPages(size_t page_index, size_t num_pages = 1) = 0;
 
-        constexpr u32 PageEntries() {
+        [[nodiscard]] constexpr u32 PageEntries() const {
             return page_table_entries;
         }
 
@@ -54,11 +53,10 @@ namespace Svm::Memory {
         std::size_t page_table_entries;
     };
 
-    template<typename Addr>
-    class FlatPageTable : public PageTable<Addr> {
+    class FlatPageTable : public BasePageTable {
     public:
 
-        explicit FlatPageTable(const u8 addr_width, const u8 page_bits) : PageTable<Addr>(addr_width, page_bits) {}
+        explicit FlatPageTable(const u8 addr_width, const u8 page_bits) : BasePageTable(addr_width, page_bits) {}
 
         void Initialize() override {
             pages.Resize(this->page_table_entries);
@@ -71,7 +69,32 @@ namespace Svm::Memory {
             return pages.DataRW();
         }
 
-        void ReadMemory(const Addr src_addr, void *dest_buffer, const std::size_t size) override {
+        void ReadMemory(const VAddress &src_addr, void *dest_buffer, size_t size) override {
+            if (std::holds_alternative<u64>(src_addr)) {
+                ReadImpl(std::get<u64>(src_addr), dest_buffer, size);
+            } else {
+                ReadImpl(std::get<u32>(src_addr), dest_buffer, size);
+            }
+        }
+
+        void WriteMemory(const VAddress &dest_addr, const void* src_buffer, size_t size) override {
+            if (std::holds_alternative<u64>(dest_addr)) {
+                WriteImpl(std::get<u64>(dest_addr), src_buffer, size);
+            } else {
+                WriteImpl(std::get<u32>(dest_addr), src_buffer, size);
+            }
+        }
+
+        std::optional<void *> GetPointer(const VAddress &vaddr) override {
+            if (std::holds_alternative<u64>(vaddr)) {
+                return GetPointerImpl(std::get<u64>(vaddr));
+            } else {
+                return GetPointerImpl(std::get<u32>(vaddr));
+            }
+        }
+
+        template<typename Addr>
+        void ReadImpl(const Addr src_addr, void *dest_buffer, size_t size) {
             Addr remaining_size = size;
             Addr page_index = src_addr >> this->page_bits;
             Addr page_offset = src_addr & this->page_mask;
@@ -98,7 +121,8 @@ namespace Svm::Memory {
             }
         }
 
-        void WriteMemory(const Addr dest_addr, const void* src_buffer, const std::size_t size) override {
+        template<typename Addr>
+        void WriteImpl(Addr dest_addr, const void* src_buffer, size_t size) {
             Addr remaining_size = size;
             Addr page_index = dest_addr >> this->page_bits;
             Addr page_offset = dest_addr & this->page_mask;
@@ -128,7 +152,8 @@ namespace Svm::Memory {
             return pages[page_index];
         }
 
-        std::optional<void *> GetPointer(Addr vaddr) override {
+        template<typename Addr>
+        std::optional<void *> GetPointerImpl(Addr vaddr) {
             auto &pte = GetPTE(vaddr >> this->page_bits);
             auto page_start = pte.PageStart();
             if (!page_start) {

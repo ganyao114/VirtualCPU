@@ -10,7 +10,7 @@ namespace Svm::Decoder {
         return (first_part & 0xF800) <= 0xE800;
     }
 
-    A32Decoder::A32Decoder(uint32_t code_addr, IR::Assembler *visitor, Memory::MemoryInterface<u32> *memory, bool thumb)
+    A32Decoder::A32Decoder(uint32_t code_addr, IR::Assembler *visitor, Memory::MemoryInterface *memory, bool thumb)
             : Disassembler(code_addr), visitor(visitor), memory(memory), thumb_mode(thumb), code_start(code_addr) {
         code_address = code_addr;
     }

@@ -12,7 +12,7 @@ namespace Svm {
 
     class JitThread final {
     public:
-        using Task = Function<void ()>;
+        using Task = std::function<void ()>;
 
         explicit JitThread(int thread_count);
 

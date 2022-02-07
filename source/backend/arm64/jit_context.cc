@@ -9,17 +9,13 @@
 
 namespace Svm::A64 {
 
-    A64JitContext::A64JitContext(IR::IRBlock *block, JitRuntime *runtime) : ir_block(block), runtime(runtime) {
+    A64JitContext::A64JitContext(IR::IRBlock *block, JitRuntime *runtime, MacroAssembler &masm) : ir_block(block), runtime(runtime), masm(masm) {
         configs = runtime->GetConfigs();
         start_pc = block->StartPC();
         pc = start_pc;
-        end = block->StartPC() + block->BlockCodeSize();
+        end = block->StartPC() + block->BlockSize();
         masm.EnsureEmitFor(0x10000);
-        if (runtime->Guest64Bit()) {
-            page_const = &runtime->GetMemory64();
-        } else {
-            page_const = &runtime->GetMemory32();
-        }
+        page_const = &runtime->GetPageTable();
         reg_mng.Initialize(block, runtime->GuestArch());
     }
 
@@ -324,8 +320,8 @@ namespace Svm::A64 {
         if (configs->use_offset_pt) {
             if (va.Const()) {
                 auto pa = ret_operand ? result.AcquireTmpX() : pa_in;
-                __ Mov(pa, va.Address() + reinterpret_cast<VAddr>(configs->offset_pt_base));
-                result.Set(MemOperand{pa});
+                __ Mov(pa, va.Address());
+                result.Set(MemOperand{pt, pa});
                 return result;
             } else {
                 if (!ret_operand) {
@@ -457,6 +453,20 @@ namespace Svm::A64 {
         auto &ctx = reg_mng.Context();
         __ Mov(ip, va);
         Store<VAddr>(ip, MemOperand(ctx, reg_mng.PCOffset()));
+
+        if (runtime->Static()) {
+            auto block_label = BlockLabel(va);
+            if (block_label) {
+                __ B(block_label);
+            } else {
+                __ Bind(LinkLabel(va));
+                __ B(DispatcherLabel());
+                __ Nop();
+                __ Nop();
+            }
+            return;
+        }
+
         auto [base, block] = runtime->GetBlockCache(va);
         VAddr cache;
         if (block->BoundModule()) {
@@ -502,11 +512,8 @@ namespace Svm::A64 {
             __ Br(pa);
             __ Bind(miss_rsb);
         }
-        CodeCacheLookup(va, pa, miss_cache);
-        __ Br(pa);
-        __ Bind(miss_cache);
-        // go to host
-        ReturnHost();
+        __ Mov(reg_mng.IP(), va);
+        __ B(DispatcherLabel());
     }
 
     void A64JitContext::ReturnHost() {
@@ -649,6 +656,8 @@ namespace Svm::A64 {
     void A64JitContext::EndBlock() {
         FlushFallback();
         // build return host
+        __ Bind(&dispatcher_label);
+        BuildDispatcher();
         __ Bind(&return_to_host);
         ReturnHost();
     }
@@ -656,6 +665,10 @@ namespace Svm::A64 {
     void A64JitContext::Flush(CodeBuffer &buffer) {
         label_alloc.SetDestBuffer(reinterpret_cast<VAddr>(buffer.exec_data));
         __ FinalizeCode();
+        for (auto &link_label : link_labels) {
+            runtime->PushLinkPoint(link_label.target,
+                                   reinterpret_cast<PAddr>(buffer.exec_data + link_label.label->GetLocation()));
+        }
     }
 
     PageFallback &A64JitContext::AllocPageFallback(VirtualAddress &va, const CPURegister &reg, u8 action, bool atomic) {
@@ -685,6 +698,61 @@ namespace Svm::A64 {
 
     void A64JitContext::TickPC(VAddr pc_) {
         this->pc = pc_;
+    }
+
+    Label *A64JitContext::DispatcherLabel() {
+        if (runtime_labels) {
+            return runtime_labels->Dispatcher();
+        }
+        need_build_dispatcher = true;
+        return &dispatcher_label;
+    }
+
+    void A64JitContext::BuildDispatcher() {
+        if (!need_build_dispatcher) return;
+        auto label_loop = label_alloc.AllocLabel();
+        auto miss_cache = label_alloc.AllocLabel();
+        auto &va = reg_mng.IP();
+        auto &tmp1 = reg_mng.AcquireTmpX();
+        auto &tmp2 = reg_mng.AcquireTmpX();
+        auto &pa = va;
+        auto &ctx = reg_mng.Context();
+        // load hash table
+        __ Ldr(tmp1, MemOperand(ctx, OFF_HELP(dispatcher_table)));
+        // align
+        __ Lsr(tmp2, va, 2);
+        // hash
+        __ Eor(tmp2, tmp2, Operand(tmp2, LSR, HASH_TABLE_PAGE_BITS));
+        __ And(tmp2, tmp2, (1 << HASH_TABLE_PAGE_BITS) - 1);
+        // looper
+        __ Add(tmp1, tmp1, Operand(tmp2, LSL, 4));
+        __ Bind(label_loop);
+        __ Ldr(tmp2, MemOperand(tmp1, 16, PostIndex));
+        __ Cbz(tmp2, miss_cache);
+        __ Sub(tmp2, tmp2, va);
+        __ Cbnz(tmp2, label_loop);
+        // find target
+        __ Ldr(pa, MemOperand(tmp1, -8, PreIndex));
+        reg_mng.ReleaseTmpX(tmp1);
+        reg_mng.ReleaseTmpX(tmp2);
+        __ Br(pa);
+        __ Bind(miss_cache);
+        Load<VAddr>(pa, MemOperand(ctx, OFF_HELP(cache_miss_trampoline)));
+        __ Br(pa);
+    }
+
+    Label *A64JitContext::BlockLabel(VAddr vaddr) {
+        return runtime_labels ? runtime_labels->BlockLabel(vaddr) : nullptr;
+    }
+
+    Label *A64JitContext::LinkLabel(VAddr vaddr) {
+        if (!runtime_labels) {
+            auto &link_label = link_labels.emplace_back();
+            link_label.target = vaddr;
+            link_label.label = label_alloc.AllocLabel();
+            return link_label.label;
+        }
+        return runtime_labels->LinkLabel(vaddr);
     }
 
     ScopeMemOperand::ScopeMemOperand(A64JitContext *context) : context(context) {}

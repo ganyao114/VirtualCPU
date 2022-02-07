@@ -26,7 +26,7 @@ namespace Svm::Decoder {
         }
     }
 
-    X64Decoder::X64Decoder(VAddr start, IR::Assembler *visitor, Memory::MemoryInterface<VAddr> *memory) : start(start), visitor(visitor),
+    X64Decoder::X64Decoder(VAddr start, IR::Assembler *visitor, Memory::MemoryInterface *memory) : start(start), visitor(visitor),
                                                                                                           memory(memory) {}
 
     void X64Decoder::Decode() {

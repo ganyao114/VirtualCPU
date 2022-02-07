@@ -19,6 +19,8 @@ namespace Svm::Cache {
 
         void Free(void *rx_buffer);
 
+        u8 *RwBuffer(void *rx_buffer);
+
     private:
         SpinMutex lock;
         UniquePtr<SimpleHeap<true>> heap;

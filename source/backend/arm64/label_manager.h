@@ -12,22 +12,22 @@ namespace Svm::A64 {
 
     using namespace vixl::aarch64;
 
-    class FatalAddr {
+    class FatalAddress {
     public:
 
-        constexpr FatalAddr(const Register &rt) : va_{rt} {};
+        constexpr FatalAddress(const Register &rt) : va_{rt} {};
 
-        constexpr FatalAddr(const VAddr &vaddr) : addr_(vaddr), is_const_{true} {};
+        constexpr FatalAddress(const VAddr &vaddr) : addr_(vaddr), is_const_{true} {};
 
-        const bool Const() const {
+        [[nodiscard]] bool Const() const {
             return is_const_;
         }
 
-        const VAddr Address() const {
+        [[nodiscard]] VAddr Address() const {
             return addr_;
         }
 
-        const Register &Reg() const {
+        [[nodiscard]] const Register &Reg() const {
             return va_;
         }
 
@@ -60,6 +60,15 @@ namespace Svm::A64 {
         VAddr dest_buffer_start_;
         MacroAssembler &masm_;
         std::list<Outstanding> labels_outstanding_;
+    };
+
+    class RuntimeLabels {
+    public:
+        virtual Label *Dispatcher() = 0;
+
+        virtual Label *BlockLabel(VAddr vaddr) = 0;
+
+        virtual Label *LinkLabel(VAddr link_target) = 0;
     };
 
 }

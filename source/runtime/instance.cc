@@ -12,13 +12,8 @@ namespace Svm {
     }
 
     ArrayRef<PageEntry> SvmInstance::PageTable() {
-        if (runtime->Guest64Bit()) {
-            auto &page_table = runtime->GetMemory64();
-            return {page_table.PageTablePtr(), page_table.PageEntries()};
-        } else {
-            auto &page_table = runtime->GetMemory32();
-            return {page_table.PageTablePtr(), page_table.PageEntries()};
-        }
+        auto &page_table = runtime->GetPageTable();
+        return {page_table.PageTablePtr(), page_table.PageEntries()};
     }
 
 }

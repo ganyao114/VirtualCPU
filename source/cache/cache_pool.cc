@@ -20,4 +20,8 @@ namespace Svm::Cache {
         u8 *rw = heap->Memory().GetRW(static_cast<u8 *>(rx_buffer));
         heap->Free(rw);
     }
+
+    u8 *CachePool::RwBuffer(void *rx_buffer) {
+        return heap->Memory().GetRW(static_cast<unsigned char *>(rx_buffer));
+    }
 }

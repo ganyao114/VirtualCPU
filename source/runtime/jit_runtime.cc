@@ -7,9 +7,10 @@
 
 #ifdef __aarch64__
 #include <backend/trampolines.h>
+#include <backend/arm64/block_linker.h>
 #endif
 
-#include "basic_block.h"
+#include "block_translator.h"
 
 constexpr auto max_code_cache = 1024 * 1024 * 256;
 constexpr auto jit_hotness = 0x20;
@@ -20,17 +21,13 @@ namespace Svm {
         dispatcher = MakeUnique<Dispatcher>();
         cache_pool = MakeUnique<CachePool>(max_code_cache);
         jit_thread = MakeUnique<JitThread>(configs.jit_threads);
+        if (!configs.use_offset_pt) {
+            page_table = MakeUnique<FlatPageTable>(configs.address_width, configs.page_bits);
+            page_table->Initialize();
+        }
         if (Guest64Bit()) {
-            if (!configs.use_offset_pt) {
-                page_table_64 = MakeUnique<PageTable64>(configs.address_width, configs.page_bits);
-                page_table_64->Initialize();
-            }
             block_cache_64 = MakeUnique<BlockCache64>(configs.static_code);
         } else {
-            if (!configs.use_offset_pt) {
-                page_table_32 = MakeUnique<PageTable32>(configs.address_width, configs.page_bits);
-                page_table_32->Initialize();
-            }
             block_cache_32 = MakeUnique<BlockCache32>(configs.static_code);
         }
         switch (configs.guest_arch) {
@@ -45,7 +42,7 @@ namespace Svm {
     void JitRuntime::RegisterCore(VCpu *cpu) {
         LockGuard guard(lock);
         cores.emplace(cpu);
-        cpu->Context()->help.page_table = Guest64Bit() ? GetMemory64().PageTablePtr() : GetMemory32().PageTablePtr();
+        cpu->Context()->help.page_table = GetPageTable().PageTablePtr();
         cpu->Context()->help.context_ptr = cpu;
         cpu->Context()->help.dispatcher_table = GetDispatcher().Data();
         cpu->Context()->help.cache_miss_trampoline = CodeCacheTrampoline();
@@ -139,7 +136,7 @@ namespace Svm {
         return ir_blocks_lru.New(base, &ir_instr_heap);
     }
 
-    VAddr JitRuntime::GetBlockCodeCache(BasicBlock *cache) {
+    PAddr JitRuntime::GetBlockCodeCache(BasicBlock *cache) {
         if (cache->BoundModule()) {
             auto &module_info = cache->GetModule();
             auto &module = mapped_modules[cache->GetModule().module_id];
@@ -156,6 +153,10 @@ namespace Svm {
 
         SpinScope guard(cache->Lock());
         if (cache->Registered()) {
+            return;
+        }
+        if (Static()) {
+            cache->RegisteredCache();
             return;
         }
         auto module = QueryModule(base);
@@ -184,7 +185,7 @@ namespace Svm {
         ir = GenerateBlock(this, cache.base, configs.guest_arch);
         if (ir) {
             cache.block->SetIR(ir);
-            cache.block->SetSize(ir->BlockCodeSize());
+            cache.block->SetSize(ir->BlockSize());
             if (Guest64Bit()) {
                 GetCache64().Flush(cache.base, cache.block);
             } else {
@@ -205,7 +206,16 @@ namespace Svm {
         if (!cache.block->Compiled()) {
             if (TranslateBlock(this, ir_block.get())) {
                 cache.block->SetCompiled();
+                // Delete ir block
                 ir_blocks_lru.Delete(ir_block.get());
+                // link runtime block
+                LockGuard link_guard(lock);
+                if (auto itr = pending_link_points.find(cache.base); itr != pending_link_points.end()) {
+                    for (auto link_point : itr->second) {
+                        LinkBlock(link_point, GetBlockCodeCache(cache.block), cache_pool->RwBuffer(reinterpret_cast<void *>(link_point)), true);
+                    }
+                    pending_link_points.erase(itr);
+                }
             }
         }
     }
@@ -255,38 +265,9 @@ namespace Svm {
     }
 
     void JitRuntime::RecursiveIRBlock(const SharedPtr<IR::IRBlock>& ir_block) {
-        switch (ir_block->GetTermType()) {
-            case IR::IRBlock::DIRECT: {
-                auto &address = ir_block->TermDirect().next_block;
-                if (address.IsConst()) {
-                    PushBlock(address.ConstAddress().Value<VAddr>(), false);
-                }
-                break;
-            }
-            case IR::IRBlock::CHECK_COND: {
-                auto &address_then = ir_block->TermCheckCond().then_;
-                auto &address_else = ir_block->TermCheckCond().else_;
-                if (address_then.IsConst()) {
-                    PushBlock(address_then.ConstAddress().Value<VAddr>(), false);
-                }
-                if (address_else.IsConst()) {
-                    PushBlock(address_else.ConstAddress().Value<VAddr>(), false);
-                }
-                break;
-            }
-            case IR::IRBlock::CHECK_BOOL: {
-                auto &address_then = ir_block->TermCheckBool().then_;
-                auto &address_else = ir_block->TermCheckBool().else_;
-                if (address_then.IsConst()) {
-                    PushBlock(address_then.ConstAddress().Value<VAddr>(), false);
-                }
-                if (address_else.IsConst()) {
-                    PushBlock(address_else.ConstAddress().Value<VAddr>(), false);
-                }
-                break;
-            }
-            case IR::IRBlock::DEAD_END:
-                break;
+        auto next_blocks = ir_block->NextBlocksAddress(true);
+        for (auto block : next_blocks) {
+            PushBlock(block, false);
         }
     }
 
@@ -308,6 +289,33 @@ namespace Svm {
 
     void *JitRuntime::ReturnHostTrampoline() {
         return reinterpret_cast<void *>(__svm_return_to_host);
+    }
+
+    void JitRuntime::PutCodeCache(VAddr pc, PAddr cache) {
+        dispatcher->Put(pc, cache);
+    }
+
+    PAddr JitRuntime::GetCodeCache(VAddr pc) {
+        return GetBlockCodeCache(GetBlockCache(pc).block);
+    }
+
+    PAddr JitRuntime::FlushCodeCache(const u8 *buffer, size_t size) {
+        abort();
+        return 0;
+    }
+
+    void JitRuntime::PushLinkPoint(VAddr target, PAddr link_point) {
+        LockGuard guard(lock);
+        if (auto cache = GetCodeCache(target); cache != 0) {
+            auto rw_ptr = cache_pool->RwBuffer(reinterpret_cast<u8 *>(link_point));
+            LinkBlock(link_point, cache, rw_ptr);
+            return;
+        }
+        pending_link_points[target].emplace_back(link_point);
+    }
+
+    bool JitRuntime::Static() {
+        return configs.static_code;
     }
 
 }

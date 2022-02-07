@@ -3,7 +3,7 @@
 //
 
 #include <base/marco.h>
-#include <memory/memory_interface.h>
+#include <include/memory_interface.h>
 #include <frontend/decoder.h>
 #include <externals/vixl/aarch32/disasm-aarch32.h>
 
@@ -14,7 +14,7 @@ namespace Svm::Decoder {
     class A32Decoder : public Decoder::BaseDecoder, vixl::aarch32::Disassembler {
     public:
 
-        explicit A32Decoder(u32 code_addr, IR::Assembler *visitor, Memory::MemoryInterface<u32> *memory, bool thumb_mode);
+        explicit A32Decoder(u32 code_addr, IR::Assembler *visitor, Memory::MemoryInterface *memory, bool thumb_mode);
 
         void Decode() override;
 
@@ -67,7 +67,7 @@ namespace Svm::Decoder {
         IR::Assembler *visitor{};
         bool thumb_mode{false};
         u32 pc{};
-        Memory::MemoryInterface<u32> *memory{};
+        Memory::MemoryInterface *memory{};
     };
 
 }

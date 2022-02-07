@@ -27,8 +27,6 @@ namespace Svm::A64 {
 
         void Terminal();
 
-        void Flush();
-
         constexpr A64JitContext *Context() {
             return context;
         }

@@ -3,18 +3,17 @@
 //
 
 #include "block.h"
-#include "graph.h"
 
-namespace Svm::Ast {
+namespace Svm {
 
-    BasicBlock::BasicBlock(Graph *graph, VAddr pc, u32 size) : graph(graph), block_start(pc), size(size) {}
+    Block::Block(ObjectPool<IR::Instruction> *pool, VAddr pc) : ir_block{pc, pool} {}
 
-    void BasicBlock::AddPredecessor(BasicBlock *block) {
+    void Block::AddPredecessor(Block *block) {
         predecessors.push_back(block);
         block->successors.push_back(this);
     }
 
-    void BasicBlock::AddSuccessor(BasicBlock *block) {
+    void Block::AddSuccessor(Block *block) {
         successors.push_back(block);
         block->predecessors.push_back(this);
     }

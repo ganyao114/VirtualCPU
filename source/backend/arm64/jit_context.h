@@ -9,7 +9,7 @@
 #include <externals/vixl/aarch64/assembler-aarch64.h>
 #include <externals/vixl/aarch64/macro-assembler-aarch64.h>
 #include <ir/block.h>
-#include <memory/page_table.h>
+#include <runtime/page_table.h>
 #include <include/configs.h>
 #include <runtime/jit_runtime.h>
 #include <backend/arm64/host_callbacks.h>
@@ -86,6 +86,11 @@ namespace Svm::A64 {
         VAddr pc{};
     };
 
+    struct LinkedLabel {
+        Label *label;
+        VAddr target;
+    };
+
     class ScopeMemOperand {
     public:
 
@@ -109,10 +114,10 @@ namespace Svm::A64 {
         mutable List<Register> tmps;
     };
 
-    class A64JitContext : public BaseObject, CopyDisable, std::enable_shared_from_this<A64JitContext> {
+    class A64JitContext : public BaseObject, CopyDisable {
     public:
 
-        explicit A64JitContext(IR::IRBlock *ir_block, JitRuntime *runtime);
+        explicit A64JitContext(IR::IRBlock *ir_block, JitRuntime *runtime, MacroAssembler &masm);
 
         constexpr bool EnabledMMU() {
             return page_const;
@@ -193,6 +198,10 @@ namespace Svm::A64 {
             return masm;
         }
 
+        constexpr std::list<LinkedLabel> &LinkLabels() {
+            return link_labels;
+        }
+
         constexpr JitRuntime *Runtime() {
             return runtime;
         }
@@ -217,10 +226,19 @@ namespace Svm::A64 {
 
         void CasCompat(const Register &pa, const Register &ex_value, const Register &new_value, u8 size_in_byte);
 
-        MacroAssembler masm{PositionIndependentCode};
+        Label *DispatcherLabel();
+
+        Label *BlockLabel(VAddr vaddr);
+
+        Label *LinkLabel(VAddr link_target);
+
+        void BuildDispatcher();
+
+        MacroAssembler &masm;
         IR::IRBlock *ir_block{};
         RegisterManager reg_mng{};
         LabelAllocator label_alloc{masm};
+        RuntimeLabels *runtime_labels{};
         Memory::PageTableConst *page_const;
         UserConfigs *configs;
         JitRuntime *runtime;
@@ -230,10 +248,14 @@ namespace Svm::A64 {
         VAddr end{};
 
         bool need_check_halt{false};
+        bool need_build_dispatcher{false};
 
         Label return_to_host;
+        Label dispatcher_label;
         std::list<PageFallback> page_fallbacks;
         std::list<PageFatal> page_fatals;
+
+        std::list<LinkedLabel> link_labels;
     };
 
 }

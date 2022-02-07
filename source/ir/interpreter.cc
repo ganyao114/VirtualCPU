@@ -26,11 +26,7 @@ break;
 
     Interpreter::Interpreter(JitRuntime *runtime, IRBlock *ir_block, VCpu *core, void *stack) : runtime(runtime), ir_block(ir_block),
                                                                                    core(core) {
-        if (runtime->Guest64Bit()) {
-            memory64 = &runtime->GetMemory64();
-        } else {
-            memory32 = &runtime->GetMemory32();
-        }
+        memory = &runtime->GetPageTable();
         auto reg_size = ir_block->Sequence().size();
         if (!stack) {
             stack = malloc(reg_size * sizeof(IRReg));
@@ -220,29 +216,13 @@ break;
         Operate([&](u64 expect, u64 the_new) {
             switch (exp_val.GetSize()) {
                 case IR::Size::U8:
-                    if (memory64) {
-                        return memory64->AtomicCompareAndSwap<u8>(address, expect, the_new);
-                    } else {
-                        return memory32->AtomicCompareAndSwap<u8>(address, expect, the_new);
-                    }
+                    return memory->AtomicCompareAndSwap<u8>(address, expect, the_new);
                 case IR::Size::U16:
-                    if (memory64) {
-                        return memory64->AtomicCompareAndSwap<u16>(address, expect, the_new);
-                    } else {
-                        return memory32->AtomicCompareAndSwap<u16>(address, expect, the_new);
-                    }
+                    return memory->AtomicCompareAndSwap<u16>(address, expect, the_new);
                 case IR::Size::U32:
-                    if (memory64) {
-                        return memory64->AtomicCompareAndSwap<u32>(address, expect, the_new);
-                    } else {
-                        return memory32->AtomicCompareAndSwap<u32>(address, expect, the_new);
-                    }
+                    return memory->AtomicCompareAndSwap<u32>(address, expect, the_new);
                 case IR::Size::U64:
-                    if (memory64) {
-                        return memory64->AtomicCompareAndSwap<u64>(address, expect, the_new);
-                    } else {
-                        return memory32->AtomicCompareAndSwap<u64>(address, expect, the_new);
-                    }
+                    return memory->AtomicCompareAndSwap<u64>(address, expect, the_new);
                 default:
                     UNREACHABLE();
             }
@@ -253,11 +233,7 @@ break;
         auto address = addr_val.IsConst() ? addr_val.ConstAddress().Value<u64>() : V(
                 addr_val.ValueAddress()).Get<u64>();
         try {
-            if (memory64) {
-                memory64->WriteMemory(address, &V(val).data, val.SizeByte());
-            } else {
-                memory32->WriteMemory(address, &V(val).data, val.SizeByte());
-            }
+            memory->WriteMemory(address, &V(val).data, val.SizeByte());
         } catch (MemoryException &e) {
             core->MarkInterrupt();
             core->PageFatal(e.addr, PageEntry::Write);
@@ -269,11 +245,7 @@ break;
         auto address = addr_val.IsConst() ? addr_val.ConstAddress().Value<u64>() : V(
                 addr_val.ValueAddress()).Get<u64>();
         try {
-            if (memory64) {
-                memory64->ReadMemory(address, &V(ret_val).data, ret_val.SizeByte());
-            } else {
-                memory32->ReadMemory(address, &V(ret_val).data, ret_val.SizeByte());
-            }
+            memory->ReadMemory(address, &V(ret_val).data, ret_val.SizeByte());
         } catch (MemoryException &e) {
             core->MarkInterrupt();
             core->PageFatal(e.addr, PageEntry::Read);

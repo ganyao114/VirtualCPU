@@ -243,27 +243,6 @@ break;
         }
     }
 
-    void IRCommitA64::Flush() {
-        context->EndBlock();
-        auto runtime = context->Runtime();
-        auto cache_size = __ GetBuffer()->GetSizeInBytes();
-        auto[base, cache] = runtime->GetBlockCache(start_pc);
-        CodeBuffer buffer{};
-        if (cache->BoundModule()) {
-            auto module = runtime->GetModule(cache->GetModule().module_id);
-            buffer = module->AllocBuffer(cache->GetModule().block_id, cache_size);
-        } else {
-            buffer = runtime->GetCodeCachePool().Alloc(cache_size);
-        }
-        context->Flush(buffer);
-        memcpy(buffer.rw_data, __ GetBuffer()->GetStartAddress<u8 *>(), cache_size);
-        buffer.Flush();
-        if (!cache->BoundModule()) {
-            runtime->GetDispatcher().GetEntry(
-                    cache->GetDispatchIndex()).value = reinterpret_cast<VAddr>(buffer.exec_data);
-        }
-    }
-
     Label *IRCommitA64::GetLabel(u32 label_id) {
         auto &res = labels[label_id];
         if (!res) {
@@ -285,11 +264,7 @@ break;
 
     A64IROptResult::A64IROptResult(IRCommitA64 *commit_a64) : commit_a64(commit_a64) {
         auto runtime = commit_a64->Context()->Runtime();
-        if (runtime->Guest64Bit()) {
-            const_read = MakeUnique<IR::OptConstReadImpl>(&runtime->GetMemory64());
-        } else {
-            const_read = MakeUnique<IR::OptConstReadImpl>(&runtime->GetMemory32());
-        }
+        const_read = MakeUnique<IR::OptConstReadImpl>(&runtime->GetPageTable());
     }
 
     IR::OptHostReg *A64IROptResult::GetOptHostReg() {

@@ -7,8 +7,9 @@
 #include "types.h"
 #include "mutex"
 #include "configs.h"
-#include "memory/page_entry.h"
+#include "page_entry.h"
 #include "base/array_ref.h"
+#include "memory_interface.h"
 
 namespace Svm {
 
@@ -16,6 +17,23 @@ namespace Svm {
     class VCpu;
 
     using namespace Memory;
+
+    class Runtime {
+    public:
+        virtual bool Static() = 0;
+
+        virtual CpuArch GuestArch() = 0;
+
+        virtual MemoryInterface &GetMemory() = 0;
+
+        virtual void PutCodeCache(VAddr pc, PAddr cache) = 0;
+
+        virtual PAddr GetCodeCache(VAddr pc) = 0;
+
+        virtual PAddr FlushCodeCache(const u8 *buffer, size_t size) = 0;
+
+        virtual void PushLinkPoint(VAddr target, PAddr link_point) = 0;
+    };
 
     class SvmInstance : CopyDisable {
     public:

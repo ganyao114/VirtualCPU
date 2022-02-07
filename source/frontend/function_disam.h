@@ -5,9 +5,8 @@
 #pragma once
 
 #include <base/marco.h>
-#include <ast/graph.h>
 #include <ast/block.h>
-#include <memory/memory_interface.h>
+#include <include/memory_interface.h>
 
 namespace Svm {
 

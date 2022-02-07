@@ -29,14 +29,11 @@ set(SOURCES
         ir/block.cc
         ir/assembler.cc
         ir/interpreter.cc
-        ast/ast.cc
-        ast/cfg.cc
-        ast/expr.cc
         ast/block.cc
-        ast/graph.cc
+        ast/functions.cc
         frontend/x64/decoder.cc
         frontend/x64/jit_visitor.cc
-        frontend/function_disam.cc
+#        frontend/function_disam.cc
         frontend/arm32/decoder.cc
         ir_opt/ir_opt_result.cc
         ir_opt/dead_code_remove.cc
@@ -53,7 +50,7 @@ set(SOURCES
         platform/memory.cc
         platform/unix_file.cc
         runtime/jit_runtime.cc
-        runtime/basic_block.cc
+        runtime/block_translator.cc
         runtime/jit_thread.cc
         runtime/instance.cc
         runtime/vcpu.cc
@@ -75,7 +72,8 @@ set(SOURCES
         backend/arm64/ir_translate_logical.cc
         backend/arm64/ir_translate_system.cc
         backend/arm64/ir_translate_context.cc
-        backend/arm64/x64/ir_translate_x64.cc)
+        backend/arm64/x64/ir_translate_x64.cc
+        backend/arm64/block_linker.cc)
 
 if (ANDROID)
     set(PLATFORM_SOURCES android_entry.cc)

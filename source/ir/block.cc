@@ -79,7 +79,7 @@ namespace Svm::IR {
         instructions->Destroy(instr);
     }
 
-    bool IRBlock::Split(const SharedPtr<IRBlock> &new_block, u32 offset) {
+    bool IRBlock::Split(IRBlock *new_block, u32 offset) {
         auto itr = instr_sequence.begin();
         u32 cur_offset{0};
         for (; !itr.empty(); itr++) {
@@ -111,7 +111,7 @@ namespace Svm::IR {
             case DEAD_END:
                 break;
         }
-        Terminal(Direct{Imm(start_pc + offset)});
+        Terminal(Direct{Imm(new_block->start_pc)});
         terminal_reason = SPLIT;
         return true;
     }
@@ -287,5 +287,45 @@ namespace Svm::IR {
             instr_sequence.erase(itr);
             instructions->Destroy(&*itr);
         }
+    }
+
+    List<VAddr> IRBlock::NextBlocksAddress(bool include_call) {
+        List<VAddr> blocks{};
+        switch (GetTermType()) {
+            case IR::IRBlock::DIRECT: {
+                auto &address = TermDirect().next_block;
+                if (address.IsConst()) {
+                    if (include_call || (terminal_reason != FUNC_CALL)) {
+                        blocks.emplace_back(address.ConstAddress().Value<VAddr>());
+                    }
+                }
+                break;
+            }
+            case IR::IRBlock::CHECK_COND: {
+                auto &address_then = TermCheckCond().then_;
+                auto &address_else = TermCheckCond().else_;
+                if (address_then.IsConst()) {
+                    blocks.emplace_back(address_then.ConstAddress().Value<VAddr>());
+                }
+                if (address_else.IsConst()) {
+                    blocks.emplace_back(address_else.ConstAddress().Value<VAddr>());
+                }
+                break;
+            }
+            case IR::IRBlock::CHECK_BOOL: {
+                auto &address_then = TermCheckBool().then_;
+                auto &address_else = TermCheckBool().else_;
+                if (address_then.IsConst()) {
+                    blocks.emplace_back(address_then.ConstAddress().Value<VAddr>());
+                }
+                if (address_else.IsConst()) {
+                    blocks.emplace_back(address_else.ConstAddress().Value<VAddr>());
+                }
+                break;
+            }
+            case IR::IRBlock::DEAD_END:
+                break;
+        }
+        return std::move(blocks);
     }
 }

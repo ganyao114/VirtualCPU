@@ -92,9 +92,6 @@ namespace Svm {
     template<typename T = SharedMutex>
     using SharedLock = std::shared_lock<T>;
 
-    template<typename T = void()>
-    using Function = std::function<T>;
-
     class BaseObject : public std::enable_shared_from_this<BaseObject> {
     };
 
@@ -200,7 +197,7 @@ namespace Svm {
     class ExitGuard {
     public:
 
-        inline explicit ExitGuard(Function<void(void)> exit) : exit_{exit} {}
+        inline explicit ExitGuard(std::function<void(void)> exit) : exit_{exit} {}
 
         inline ~ExitGuard() {
             if (!canceled_) {
@@ -213,7 +210,7 @@ namespace Svm {
         }
 
     private:
-        Function<void(void)> exit_;
+        std::function<void(void)> exit_;
         bool canceled_{false};
     };
 

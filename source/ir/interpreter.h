@@ -5,7 +5,7 @@
 #pragma once
 
 #include "block.h"
-#include <memory/memory_interface.h>
+#include <include/memory_interface.h>
 #include <base/array_ref.h>
 #include <frontend/x64/cpu.h>
 
@@ -212,8 +212,7 @@ namespace Svm::IR {
         };
         IR::IRBlock *ir_block;
         IR::Instruction *current{};
-        Memory::MemoryInterface<u64> *memory64{};
-        Memory::MemoryInterface<u32> *memory32{};
+        Memory::MemoryInterface *memory;
         u32 skip_to_id{};
         u32 block_offset{};
         ArrayRef<IRReg> regs{};

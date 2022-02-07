@@ -6,27 +6,16 @@
 
 namespace Svm::IR {
 
-    OptConstReadImpl::OptConstReadImpl(PageTable32 *memory32) : memory32(memory32) {}
-
-    OptConstReadImpl::OptConstReadImpl(PageTable64 *memory64) : memory64(memory64) {}
+    OptConstReadImpl::OptConstReadImpl(BasePageTable *memory) : memory(memory) {}
 
     bool OptConstReadImpl::IsReadOnly(VAddr addr) {
-        if (memory64) {
-            auto &pte = memory64->GetPTE(addr >> memory64->page_bits);
-            return pte.Readable() && !pte.Writeable();
-        } else {
-            auto &pte = memory32->GetPTE(addr >> memory32->page_bits);
-            return pte.Readable() && !pte.Writeable();
-        }
+        auto &pte = memory->GetPTE(addr >> memory->page_bits);
+        return pte.Readable() && !pte.Writeable();
     }
 
     Vector<u8> OptConstReadImpl::ReadMemory(VAddr addr, size_t size) {
         Vector<u8> buffer(size);
-        if (memory64) {
-            memory64->ReadMemory(addr, buffer.data(), size);
-        } else {
-            memory32->ReadMemory(addr, buffer.data(), size);
-        }
+        memory->ReadMemory(addr, buffer.data(), size);
         return std::move(buffer);
     }
 

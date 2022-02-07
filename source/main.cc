@@ -12,7 +12,6 @@
 #include <platform/memory.h>
 #include <libc.h>
 #include <thread>
-#include <frontend/function_disam.h>
 #include "base/object_pool.h"
 
 using namespace Svm::X86;
@@ -78,9 +77,6 @@ int main(int argc, char *argv[]) {
     printf("OFFSET_NZCV: %lu \n", OFF_HELP(cpu_flags));
     printf("OFFSET_CODE_CACHE: %lu \n", OFF_HELP(code_cache));
 
-
-    auto res = Svm::BuildFunction(pc, nullptr);
-
     auto test_code_page = static_cast<Svm::u8 *>(Svm::Platform::MapCowMemory(0x1000));
     auto test_rw_page = static_cast<Svm::u8 *>(Svm::Platform::MapCowMemory(0x1000));
     std::memcpy(test_code_page, reinterpret_cast<const void *>(pc), masm.GetBuffer()->Size());
@@ -94,7 +90,7 @@ int main(int argc, char *argv[]) {
     configs.page_fatal = true;
     configs.check_halt = true;
     configs.tick_count = false;
-    configs.static_code = false;
+    configs.static_code = true;
     configs.rsb_cache = false;
     configs.page_align_check = false;
     configs.page_bits = 12;
