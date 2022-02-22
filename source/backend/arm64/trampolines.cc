@@ -11,7 +11,6 @@ using namespace Svm;
 CPUContext *__svm_interrupt_callback_stub(CPUContext *context) {
     auto &exception = context->help.exception;
     auto vcpu = reinterpret_cast<VCpu*>(context->help.context_ptr);
-    vcpu->MarkInterrupt();
     switch (context->help.exception.action.reason) {
         case Exception::SVC:
             vcpu->CallSvc(exception.Data<u32>());

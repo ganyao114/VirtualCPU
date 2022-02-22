@@ -9,8 +9,7 @@
 namespace Svm::A64 {
 
     void IRCommitA64::Svc(IR::Imm &svc_num) {
-        Exception::Action action{};
-        action.reason = Exception::SVC;
+        Exception::Action action{Exception::SVC};
         auto &tmp = RTemp();
         __ Mov(tmp, svc_num.data);
         context->RaiseException(action, context->PC(), tmp);
@@ -18,8 +17,7 @@ namespace Svm::A64 {
     }
 
     void IRCommitA64::Brk(IR::Imm &brk_num) {
-        Exception::Action action{};
-        action.reason = Exception::BRK;
+        Exception::Action action{Exception::BRK};
         auto &tmp = RTemp();
         __ Mov(tmp, brk_num.data);
         context->RaiseException(action, context->PC(), tmp);
@@ -27,8 +25,7 @@ namespace Svm::A64 {
     }
 
     void IRCommitA64::Hlt(IR::Imm &hlt_number) {
-        Exception::Action action{};
-        action.reason = Exception::HLT;
+        Exception::Action action{Exception::HLT};
         auto &tmp = RTemp();
         __ Mov(tmp, hlt_number.data);
         context->RaiseException(action, context->PC(), tmp);
@@ -36,8 +33,7 @@ namespace Svm::A64 {
     }
 
     void IRCommitA64::Yield() {
-        Exception::Action action{};
-        action.reason = Exception::YIELD;
+        Exception::Action action{Exception::YIELD};
         auto &tmp = RTemp();
         context->RaiseException(action, context->PC(), tmp);
         Release(tmp);

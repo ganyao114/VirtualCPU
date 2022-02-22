@@ -299,6 +299,9 @@ namespace Svm::IR {
                         blocks.emplace_back(address.ConstAddress().Value<VAddr>());
                     }
                 }
+                if (terminal_reason == FUNC_CALL) {
+                    blocks.emplace_back(StartPC() + BlockSize());
+                }
                 break;
             }
             case IR::IRBlock::CHECK_COND: {

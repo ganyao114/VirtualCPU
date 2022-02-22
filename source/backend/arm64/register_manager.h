@@ -12,7 +12,7 @@
 #include <ir_opt/ir_opt_result.h>
 #include <frontend/x64/decoder.h>
 #include <frontend/x64/cpu.h>
-#include "backend/constants.h"
+#include "constants.h"
 
 namespace Svm::A64 {
 

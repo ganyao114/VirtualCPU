@@ -6,7 +6,7 @@
 
 #include <include/types.h>
 #include <frontend/x64/cpu.h>
-#include "constants.h"
+#include "backend/arm64/constants.h"
 
 #define OFF_HELP(name) OFFSET_OF(Svm::CPUContext, help.name)
 
@@ -30,14 +30,15 @@ namespace Svm {
     struct Exception {
 
         enum Reason : u8 {
-            NONE,
+            NONE = 0,
             FALLBACK,
             SVC,
             BRK,
             YIELD,
             HLT,
             ILL_CODE,
-            PAGE_FATAL
+            PAGE_FATAL,
+            HALT
         };
 
         union Action {
@@ -46,9 +47,13 @@ namespace Svm {
                 Reason reason;
                 u8 flag;
             };
+
+            explicit Action(Reason reason, u8 flag) : reason(reason), flag(flag) {};
+
+            explicit Action(Reason reason) : reason(reason), flag(0) {};
         };
 
-        Action action;
+        Action action{NONE};
         u64 data;
         VAddr rewind;
 

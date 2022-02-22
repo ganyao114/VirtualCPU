@@ -32,7 +32,7 @@ namespace Svm {
         IR::Assembler ir_asm{*ir_block};
         Decoder::X64Decoder decoder{block_pc, &ir_asm, &runtime->GetMemory()};
         decoder.Decode();
-        ir_asm.CheckHalt();
+        ir_block->CheckHalt();
         return ir_block;
     }
 

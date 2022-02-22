@@ -9,13 +9,13 @@
 
 namespace Svm::A64 {
 
-    A64JitContext::A64JitContext(IR::IRBlock *block, JitRuntime *runtime, MacroAssembler &masm) : ir_block(block), runtime(runtime), masm(masm) {
+    A64JitContext::A64JitContext(IR::IRBlock *block, class Runtime *runtime, MacroAssembler &masm) : ir_block(block), runtime(runtime), masm(masm) {
         configs = runtime->GetConfigs();
         start_pc = block->StartPC();
         pc = start_pc;
         end = block->StartPC() + block->BlockSize();
         masm.EnsureEmitFor(0x10000);
-        page_const = &runtime->GetPageTable();
+        page_const = runtime->GetPageTableConst();
         reg_mng.Initialize(block, runtime->GuestArch());
     }
 
@@ -439,13 +439,11 @@ namespace Svm::A64 {
         if (!configs->check_halt) {
             return;
         }
-        if (!need_check_halt) {
-            return;
-        }
         auto &tmp = reg_mng.IP();
         auto &ctx = reg_mng.Context();
         __ Ldrb(tmp, MemOperand(ctx, OFF_HELP(halt_flag)));
-        __ Cbnz(tmp, &return_to_host);
+        __ Cbnz(tmp, &halt_label);
+        need_check_halt = true;
     }
 
     void A64JitContext::Forward(VAddr va) {
@@ -460,18 +458,23 @@ namespace Svm::A64 {
                 __ B(block_label);
             } else {
                 __ Bind(LinkLabel(va));
-                __ B(DispatcherLabel());
+                if (inline_dispatcher) {
+                    __ B(DispatcherLabel());
+                } else {
+                    ReturnHost();
+                }
                 __ Nop();
                 __ Nop();
             }
             return;
         }
 
-        auto [base, block] = runtime->GetBlockCache(va);
+        auto jit_runtime = dynamic_cast<JitRuntime*>(runtime);
+        auto [base, block] = jit_runtime->GetBlockCache(va);
         VAddr cache;
         if (block->BoundModule()) {
             auto &module_info = block->GetModule();
-            auto module = runtime->GetModule(module_info.module_id);
+            auto module = jit_runtime->GetModule(module_info.module_id);
             auto buffer = module->GetBoundBuffer(module_info.block_id);
             cache = reinterpret_cast<VAddr>(buffer.stub_data);
             __ B(label_alloc.AllocOutstanding(cache));
@@ -484,20 +487,6 @@ namespace Svm::A64 {
             __ Br(ip);
             reg_mng.ReleaseTmpX(tmp);
         }
-//        if (cache) {
-//            __ B(label_alloc.AllocOutstanding(cache));
-//        } else {
-//            auto miss = label_alloc.AllocLabel();
-//            auto &va_reg = reg_mng.AcquireTmpX();
-//            __ Mov(va_reg, ip);
-//            CodeCacheLookup(va_reg, ip, miss);
-//            reg_mng.ReleaseTmpX(va_reg);
-//            __ Br(ip);
-//            __ Bind(miss);
-//            // go to host
-//            __ Ldr(ip, MemOperand(ctx, OFF_HELP(cache_miss_trampoline)));
-//            __ Br(ip);
-//        }
     }
 
     void A64JitContext::Forward(const Register &va, bool check_rsb) {
@@ -512,8 +501,12 @@ namespace Svm::A64 {
             __ Br(pa);
             __ Bind(miss_rsb);
         }
-        __ Mov(reg_mng.IP(), va);
-        __ B(DispatcherLabel());
+        if (inline_dispatcher) {
+            __ Mov(reg_mng.IP(), va);
+            __ B(DispatcherLabel());
+        } else {
+            ReturnHost();
+        }
     }
 
     void A64JitContext::ReturnHost() {
@@ -524,10 +517,11 @@ namespace Svm::A64 {
         if (!configs->rsb_cache) {
             return;
         }
-        auto [base, block] = runtime->GetBlockCache(va);
+        auto jit_runtime = dynamic_cast<JitRuntime*>(runtime);
+        auto [base, block] = jit_runtime->GetBlockCache(va);
         VAddr cache{};
         if (block->Compiled()) {
-            cache = runtime->GetBlockCodeCache(block);
+            cache = jit_runtime->GetBlockCodeCache(block);
         }
         auto &ip = reg_mng.IP();
         auto &ctx = reg_mng.Context();
@@ -622,9 +616,7 @@ namespace Svm::A64 {
         auto label_interrupt = label_alloc.AllocLabel();
         for (auto &pf : page_fatals) {
             __ Bind(pf.fatal_label);
-            Exception::Action action{};
-            action.reason = Exception::PAGE_FATAL;
-            action.flag = pf.perms;
+            Exception::Action action{Exception::PAGE_FATAL, pf.perms};
             __ Mov(ip, action.raw);
             Store<Exception::Action>(ip, MemOperand(ctx, OFF_HELP(exception.action)));
             if (pf.va.Const()) {
@@ -655,6 +647,15 @@ namespace Svm::A64 {
 
     void A64JitContext::EndBlock() {
         FlushFallback();
+        // halt stub
+        if (need_check_halt) {
+            __ Bind(&halt_label);
+            Exception::Action action{Exception::HALT};
+            __ Mov(reg_mng.IP(), action.raw);
+            Store<Exception::Action>(reg_mng.IP(), MemOperand(reg_mng.Context(), OFF_HELP(exception.action)));
+            Store<bool>(xzr, MemOperand(reg_mng.Context(), OFF_HELP(halt_flag)));
+        }
+        ReturnHost();
         // build return host
         __ Bind(&dispatcher_label);
         BuildDispatcher();

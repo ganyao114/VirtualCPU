@@ -128,7 +128,7 @@ namespace Svm {
                     continue;
                 }
             }
-            loop_head_block->GetIRBlock().Emit<IR::Void, false>(IR::OpCode::CheckHalt, {});
+            loop_head_block->GetIRBlock().CheckHalt();
         }
     }
 

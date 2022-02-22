@@ -27,6 +27,18 @@ namespace Svm::Memory {
         VAddr addr;
     };
 
+    class PageTableConst {
+    public:
+
+        explicit PageTableConst(const u8 addr_width, const u8 page_bits) : addr_width(
+                addr_width), page_bits(page_bits), page_size(1 << page_bits), page_mask(page_size - 1) {}
+
+        const u8 addr_width;
+        const u8 page_bits;
+        const u32 page_size;
+        const VAddr page_mask;
+    };
+
     class MemoryInterface {
     public:
         virtual void ReadMemory(const VAddress &src_addr, void *dest_buffer, size_t size) = 0;

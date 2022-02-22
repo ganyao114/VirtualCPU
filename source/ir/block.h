@@ -264,6 +264,14 @@ namespace Svm::IR {
 
         List<VAddr> NextBlocksAddress(bool include_call = false);
 
+        constexpr void CheckHalt() {
+            need_check_halt = true;
+        }
+
+        constexpr bool NeedCheckHalt() const {
+            return need_check_halt;
+        }
+
     private:
 
         void DefaultRetSize(Instruction *instr_ptr);
@@ -289,6 +297,7 @@ namespace Svm::IR {
         };
         TerminalType terminal_type;
         TerminalReason terminal_reason{BRANCH};
+        bool need_check_halt{false};
         SharedMutex lock{};
     };
 

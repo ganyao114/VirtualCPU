@@ -117,7 +117,7 @@ namespace Svm::A64 {
     class A64JitContext : public BaseObject, CopyDisable {
     public:
 
-        explicit A64JitContext(IR::IRBlock *ir_block, JitRuntime *runtime, MacroAssembler &masm);
+        explicit A64JitContext(IR::IRBlock *ir_block, Runtime *runtime, MacroAssembler &masm);
 
         constexpr bool EnabledMMU() {
             return page_const;
@@ -203,7 +203,7 @@ namespace Svm::A64 {
         }
 
         constexpr JitRuntime *Runtime() {
-            return runtime;
+            return dynamic_cast<JitRuntime *>(runtime);
         }
 
         constexpr VAddr PC() const {
@@ -241,17 +241,19 @@ namespace Svm::A64 {
         RuntimeLabels *runtime_labels{};
         Memory::PageTableConst *page_const;
         UserConfigs *configs;
-        JitRuntime *runtime;
+        class Runtime *runtime;
 
         VAddr start_pc{};
         VAddr pc{};
         VAddr end{};
 
         bool need_check_halt{false};
+        bool inline_dispatcher{false};
         bool need_build_dispatcher{false};
 
         Label return_to_host;
         Label dispatcher_label;
+        Label halt_label;
         std::list<PageFallback> page_fallbacks;
         std::list<PageFatal> page_fatals;
 

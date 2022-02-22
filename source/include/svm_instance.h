@@ -20,6 +20,10 @@ namespace Svm {
 
     class Runtime {
     public:
+        virtual UserConfigs *GetConfigs() = 0;
+
+        virtual Memory::PageTableConst *GetPageTableConst() = 0;
+
         virtual bool Static() = 0;
 
         virtual CpuArch GuestArch() = 0;

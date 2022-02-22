@@ -7,7 +7,6 @@ INST1(Hlt, Void, Imm)
 
 // Help
 INST0(Fallback, Void)
-INST0(CheckHalt, Void)
 
 // Imm
 INST1(LoadImm, Value, Imm)

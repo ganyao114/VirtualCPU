@@ -1,4 +1,4 @@
-#include "../constants.h"
+#include "constants.h"
 
 #if defined(__APPLE__)
 #define cdecl(s) _##s
@@ -161,10 +161,48 @@ cdecl(__svm_code_run_entry_x64):
     msr nzcv, REG_IP
     ldr REG_PT, [REG_CTX, OFFSET_PT]
 
+    # load code cache first
     ldr REG_IP, [REG_CTX, OFFSET_CODE_CACHE]
     str xzr, [REG_CTX, OFFSET_CODE_CACHE]
+    cbnz REG_IP, go_guest
+
+code_dispatcher:
+    // query code cache
+    // load pc
+    ldr REG_IP, [REG_CTX, #OFFSET_X64_PC]
+    // load hash table
+    ldr REG_TMP1, [REG_CTX, #OFFSET_DISPATCHER_TBL]
+    // align
+    lsr REG_TMP2, REG_IP, 2
+    // hash DISPATCHER_TBL_PAGE_BITS
+    eor REG_TMP2, REG_TMP2, REG_TMP2, lsr #DISPATCHER_PAGE_BITS
+    and REG_TMP2, REG_TMP2, #DISPATCHER_HASH_BITS
+    add REG_TMP1, REG_TMP1, REG_TMP2, lsl #4
+
+    // looper
+query_looper:
+    ldr REG_TMP2, [REG_TMP1], #0x10
+    cbz REG_TMP2, miss_cache
+    sub REG_TMP2, REG_TMP2, REG_IP
+    cbnz REG_TMP2, query_looper
+    ldr REG_IP, [REG_TMP1, #-0x8]!
+
+go_guest:
+    // go guest
     blr REG_IP
 
+    # check exception
+    ldrb REG_IP_W, [REG_CTX, #OFFSET_EXCEPTION_ACTION]
+    cbz REG_IP_W, code_dispatcher
+
+    # in exception, go host
+    b return_host
+
+miss_cache:
+    bl cdecl(__svm_cache_miss)
+    cbnz REG_IP, go_guest
+
+return_host:
     mrs REG_IP, nzcv
     str REG_IP_W, [REG_CTX, OFFSET_NZCV]
     bl cdecl(__svm_save_guest_register_x64)
@@ -213,6 +251,26 @@ cdecl(__svm_cache_miss_trampoline):
     br REG_IP
 
 label_end_cache:
+    ret
+
+
+.align  4
+.global cdecl(__svm_cache_miss)
+cdecl(__svm_cache_miss):
+    stp x29, x30, [sp, #-16]!
+    bl  cdecl(__svm_save_host_caller)
+    mrs REG_IP, nzcv
+    str REG_IP_W, [REG_CTX, OFFSET_NZCV]
+
+    bl cdecl(__svm_cache_miss_callback)
+
+    ldr REG_IP_W, [REG_CTX, OFFSET_NZCV]
+    msr nzcv, REG_IP
+    bl  cdecl(__svm_restore_host_caller)
+    ldp x29, x30, [sp], #16
+
+    ldr REG_IP, [REG_CTX, OFFSET_CODE_CACHE]
+    str xzr, [REG_CTX, OFFSET_CODE_CACHE]
     ret
 
 

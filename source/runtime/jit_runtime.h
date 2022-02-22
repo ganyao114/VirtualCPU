@@ -178,6 +178,10 @@ namespace Svm {
             return *page_table;
         }
 
+        constexpr PageTableConst *GetPageTableConst() override {
+            return page_table.get();
+        }
+
         constexpr BlockCache32 &GetCache32() {
             return *block_cache_32;
         }
@@ -186,7 +190,7 @@ namespace Svm {
             return *block_cache_64;
         }
 
-        constexpr UserConfigs *GetConfigs() {
+        constexpr UserConfigs *GetConfigs() override {
             return &configs;
         }
 

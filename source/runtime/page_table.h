@@ -13,18 +13,6 @@
 
 namespace Svm::Memory {
 
-    class PageTableConst {
-    public:
-
-        explicit PageTableConst(const u8 addr_width, const u8 page_bits) : addr_width(
-                addr_width), page_bits(page_bits), page_size(1 << page_bits), page_mask(page_size - 1) {}
-
-        const u8 addr_width;
-        const u8 page_bits;
-        const u32 page_size;
-        const VAddr page_mask;
-    };
-
     class BasePageTable : public PageTableConst, public MemoryInterface, CopyDisable {
     public:
 

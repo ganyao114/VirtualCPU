@@ -171,7 +171,6 @@ break;
     }
 
     void Interpreter::Yield() {
-        core->MarkInterrupt();
         core->Yield();
     }
 
@@ -180,17 +179,14 @@ break;
     }
 
     void Interpreter::Svc(IR::Imm &val) {
-        core->MarkInterrupt();
         core->CallSvc(val.Value<u16>());
     }
 
     void Interpreter::Brk(IR::Imm &val) {
-        core->MarkInterrupt();
         core->CallBrk(val.Value<u16>());
     }
 
     void Interpreter::Hlt(IR::Imm &val) {
-        core->MarkInterrupt();
         core->CallHlt(val.Value<u16>());
     }
 
@@ -205,10 +201,6 @@ break;
 
     void Interpreter::PushRSB(IR::Address &a1) {
         // IGNORE
-    }
-
-    void Interpreter::CheckHalt() {
-
     }
 
     void Interpreter::CompareAndSwap(IR::Address &addr, IR::Value &exp_val, IR::Value &new_val) {
@@ -235,7 +227,6 @@ break;
         try {
             memory->WriteMemory(address, &V(val).data, val.SizeByte());
         } catch (MemoryException &e) {
-            core->MarkInterrupt();
             core->PageFatal(e.addr, PageEntry::Write);
         }
     }
@@ -247,7 +238,6 @@ break;
         try {
             memory->ReadMemory(address, &V(ret_val).data, ret_val.SizeByte());
         } catch (MemoryException &e) {
-            core->MarkInterrupt();
             core->PageFatal(e.addr, PageEntry::Read);
         }
     }
@@ -434,7 +424,6 @@ break;
                 break;
             }
             case IR::IRBlock::DEAD_END:
-                core->MarkInterrupt();
                 auto &term = ir_block->TermDeadEnd();
                 if (term.type == IR::DeadEnd::ILL_CODE) {
                     core->IllegalCode(term.dead_addr.data);

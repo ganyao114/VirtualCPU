@@ -32,7 +32,9 @@ break;
 
 
     void IRCommitA64::Translate() {
-        context->CheckHalt();
+        if (block->NeedCheckHalt()) {
+            context->CheckHalt();
+        }
         auto cur_ir = block->Sequence().begin();
         while (cur_ir != block->Sequence().end()) {
             current = &*cur_ir;
@@ -118,10 +120,6 @@ break;
         check_rsb_for_next = true;
     }
 
-    void IRCommitA64::CheckHalt() {
-        context->MarkCheckHalt();
-    }
-
     Optional<Operand> IRCommitA64::GetOperand(IR::Value &value) {
         return {};
     }
@@ -204,12 +202,10 @@ break;
             case IR::IRBlock::DEAD_END: {
                 auto &dead_end = block->TermDeadEnd();
                 if (dead_end.type == IR::DeadEnd::PAGE_FATAL) {
-                    Exception::Action action{};
-                    action.reason = Exception::PAGE_FATAL;
+                    Exception::Action action{Exception::PAGE_FATAL};
                     context->RaiseException(action, context->BlockEnd());
                 } else {
-                    Exception::Action action{};
-                    action.reason = Exception::ILL_CODE;
+                    Exception::Action action{Exception::ILL_CODE};
                     context->RaiseException(action, context->BlockEnd());
                 }
                 break;

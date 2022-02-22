@@ -31,31 +31,21 @@ namespace Svm {
 
         VAddr GetPC();
 
-        virtual void CallSvc(u32 num) {
-            abort();
-        };
+        virtual void CallSvc(u32 num);
 
-        virtual void CallHlt(u32 num) {
-            abort();
-        };
+        virtual void CallHlt(u32 num);
 
-        virtual void CallBrk(u32 num) {
-            abort();
-        };
+        virtual void CallBrk(u32 num);
 
-        virtual void Yield() {};
+        virtual void Yield();
 
         virtual void Fallback() {
             abort();
         };
 
-        virtual void PageFatal(VAddr va, u8 flags) {
-            abort();
-        };
+        virtual void PageFatal(VAddr va, u8 flags);
 
-        virtual void IllegalCode(VAddr va) {
-            abort();
-        };
+        virtual void IllegalCode(VAddr va);
 
         constexpr SvmInstance &Instance() {
             return *instance;
@@ -65,13 +55,7 @@ namespace Svm {
             return context;
         }
 
-        constexpr bool HasInterrupt() {
-            return interrupt;
-        }
-
-        constexpr void MarkInterrupt() {
-            interrupt = true;
-        }
+        bool HasInterrupt();
 
         void ClearInterrupt();
 
@@ -93,7 +77,6 @@ namespace Svm {
         SvmInstance *instance{};
         CPUContext *context{};
         CpuArch arch{};
-        std::atomic_bool interrupt{};
         std::atomic_bool interrupt_fast_ret{false};
     };
 

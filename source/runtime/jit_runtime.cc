@@ -259,7 +259,7 @@ namespace Svm {
     }
 
     void JitRuntime::RunJitCache(CPUContext *context, void *cache) {
-        context->Helper().code_cache = cache;
+//        context->Helper().code_cache = cache;
         context->Helper().halt_flag = false;
         run_code_trampoline(context);
     }

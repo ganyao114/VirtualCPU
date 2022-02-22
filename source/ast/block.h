@@ -9,7 +9,7 @@
 
 namespace Svm {
 
-    class Block : public BaseObject, CopyDisable {
+    class Block : CopyDisable {
     public:
 
         explicit Block(ObjectPool<IR::Instruction> *pool, VAddr pc);
