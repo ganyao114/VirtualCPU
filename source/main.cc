@@ -12,6 +12,7 @@
 #include <platform/memory.h>
 #include <libc.h>
 #include <thread>
+#include <cache/dispatcher_table.h>
 #include "base/object_pool.h"
 
 using namespace Svm::X86;
@@ -38,6 +39,10 @@ public:
         printf("CallBrk: %d \n", num);
         AdvancePC(1);
         MakeInterFastReturn();
+    }
+
+    void PageFatal(Svm::VAddr va, Svm::u8 flags) override {
+        ClearInterrupt();
     }
 
     void Yield() override {
@@ -75,7 +80,7 @@ int main(int argc, char *argv[]) {
     printf("OFFSET_XF: %lu \n", OFFSET_OF(ThreadContext64, flags));
     printf("OFFSET_PT: %lu \n", OFF_HELP(page_table));
     printf("OFFSET_NZCV: %lu \n", OFF_HELP(cpu_flags));
-    printf("OFFSET_CODE_CACHE: %lu \n", OFF_HELP(code_cache));
+    printf("OFFSET_CODE_CACHE: %lu \n", (1 << HASH_TABLE_PAGE_BITS) - 1);
 
     auto test_code_page = static_cast<Svm::u8 *>(Svm::Platform::MapCowMemory(0x1000));
     auto test_rw_page = static_cast<Svm::u8 *>(Svm::Platform::MapCowMemory(0x1000));
@@ -101,7 +106,7 @@ int main(int argc, char *argv[]) {
     auto page_table = instance.PageTable();
 
     page_table[0x800000 >> 12] = {(Svm::PAddr)test_code_page, Svm::PageEntry::Read};
-    page_table[rw_addr >> 12] = {(Svm::PAddr)test_rw_page, Svm::PageEntry::Read};
+    page_table[rw_addr >> 12] = {(Svm::PAddr)test_rw_page, Svm::PageEntry::None};
 
     MyVCpu core1{&instance};
     MyVCpu core2{&instance};
@@ -116,29 +121,29 @@ int main(int argc, char *argv[]) {
         }
     });
 
-    auto t2 = std::thread([&]() {
-        core2.SetPC(0x800000);
-        while (true) {
-            core2.ClearInterrupt();
-            core2.Run();
-        }
-    });
-
-    auto t3 = std::thread([&]() {
-        core3.SetPC(0x800000);
-        while (true) {
-            core3.ClearInterrupt();
-            core3.Run();
-        }
-    });
-
-    auto t4 = std::thread([&]() {
-        core4.SetPC(0x800000);
-        while (true) {
-            core4.ClearInterrupt();
-            core4.Run();
-        }
-    });
+//    auto t2 = std::thread([&]() {
+//        core2.SetPC(0x800000);
+//        while (true) {
+//            core2.ClearInterrupt();
+//            core2.Run();
+//        }
+//    });
+//
+//    auto t3 = std::thread([&]() {
+//        core3.SetPC(0x800000);
+//        while (true) {
+//            core3.ClearInterrupt();
+//            core3.Run();
+//        }
+//    });
+//
+//    auto t4 = std::thread([&]() {
+//        core4.SetPC(0x800000);
+//        while (true) {
+//            core4.ClearInterrupt();
+//            core4.Run();
+//        }
+//    });
 
     while (true) {
         sleep(3);

@@ -45,7 +45,8 @@ namespace Svm::IR {
     }
 
     void Assembler::BindLabel(IR::Label *label) {
-        block.Emit<Void>(OpCode::BindLabel, {*label});
+        auto instr = block.EmitInstr<Void>(OpCode::BindLabel, {IR::Label{nullptr}});
+        instr->GetParam<IR::Label>(0).ref = instr;
         block.BindLabel(label);
     }
 

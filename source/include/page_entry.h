@@ -16,6 +16,7 @@ namespace Svm::Memory {
     union PageEntry {
 
         enum Attr : u8 {
+            None    = 0,
             Read    = 1 << readable_bit,
             Write   = 1 << writable_bit,
             Exe     = 1 << executable_bit,

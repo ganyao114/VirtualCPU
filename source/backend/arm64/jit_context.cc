@@ -563,7 +563,7 @@ namespace Svm::A64 {
         auto &ip = reg_mng.IP();
         auto &ctx = reg_mng.Context();
         if (data.IsValid()) {
-            Store<u64>(data, MemOperand(ctx, OFF_HELP(exception.action)));
+            Store<u64>(data, MemOperand(ctx, OFF_HELP(exception.data)));
         }
         __ Mov(ip, pc_);
         Store<VAddr>(ip, MemOperand(ctx, reg_mng.PCOffset()));

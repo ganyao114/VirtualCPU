@@ -224,6 +224,24 @@ namespace Svm::IR {
             return instr_ptr->GetReturn().Get<Ret>();
         }
 
+        template <typename Ret, bool back = true>
+        Instruction *EmitInstr(OpCode opcode, const std::initializer_list<Operand> &args) {
+            Instruction *instr_ptr = instructions->Create(opcode);
+            instr_ptr->InitRet<Ret>();
+            instr_ptr->SetId(instr_sequence.size());
+            std::for_each(args.begin(), args.end(), [instr_ptr, index = size_t(0)](const auto& arg) mutable {
+                instr_ptr->SetParam(index, arg);
+                index++;
+            });
+            if constexpr (back) {
+                instr_sequence.push_back(*instr_ptr);
+            } else {
+                instr_sequence.push_front(*instr_ptr);
+            }
+            DefaultRetSize(instr_ptr);
+            return instr_ptr;
+        }
+
         void RemoveInstr(Instruction *instr);
 
         void IndexInstructions();
