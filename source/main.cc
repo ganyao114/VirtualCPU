@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     auto page_table = instance.PageTable();
 
     page_table[0x800000 >> 12] = {(Svm::PAddr)test_code_page, Svm::PageEntry::Read};
-    page_table[rw_addr >> 12] = {(Svm::PAddr)test_rw_page, Svm::PageEntry::None};
+    page_table[rw_addr >> 12] = {(Svm::PAddr)test_rw_page, Svm::PageEntry::Read | Svm::PageEntry::Write};
 
     MyVCpu core1{&instance};
     MyVCpu core2{&instance};
@@ -121,29 +121,29 @@ int main(int argc, char *argv[]) {
         }
     });
 
-//    auto t2 = std::thread([&]() {
-//        core2.SetPC(0x800000);
-//        while (true) {
-//            core2.ClearInterrupt();
-//            core2.Run();
-//        }
-//    });
-//
-//    auto t3 = std::thread([&]() {
-//        core3.SetPC(0x800000);
-//        while (true) {
-//            core3.ClearInterrupt();
-//            core3.Run();
-//        }
-//    });
-//
-//    auto t4 = std::thread([&]() {
-//        core4.SetPC(0x800000);
-//        while (true) {
-//            core4.ClearInterrupt();
-//            core4.Run();
-//        }
-//    });
+    auto t2 = std::thread([&]() {
+        core2.SetPC(0x800000);
+        while (true) {
+            core2.ClearInterrupt();
+            core2.Run();
+        }
+    });
+
+    auto t3 = std::thread([&]() {
+        core3.SetPC(0x800000);
+        while (true) {
+            core3.ClearInterrupt();
+            core3.Run();
+        }
+    });
+
+    auto t4 = std::thread([&]() {
+        core4.SetPC(0x800000);
+        while (true) {
+            core4.ClearInterrupt();
+            core4.Run();
+        }
+    });
 
     while (true) {
         sleep(3);
