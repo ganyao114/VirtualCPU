@@ -25,9 +25,9 @@ namespace Svm {
 
         bool Close() override;
 
-        void Read(void *dest, size_t offset, size_t size) override;
+        bool Read(void *dest, size_t offset, size_t size) override;
 
-        void Write(void *src, size_t offset, size_t size) override;
+        bool Write(void *src, size_t offset, size_t size) override;
 
         void *Map(size_t offset, size_t size) override;
 

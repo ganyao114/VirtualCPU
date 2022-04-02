@@ -85,7 +85,7 @@ namespace Svm::Cache {
 
     CacheModule::CacheModule(u16 id, VAddr base, u32 size) : id(id), size(size), module_base(base) {
         max_index = (size >> 2) / 32;
-        heap = MakeUnique<SimpleHeap<true>>(size);
+        heap = std::make_unique<SimpleHeap<true>>(size);
         u32 jump_entry_size{};
 #if defined(__aarch64__)
         jump_entry_size = 4;
@@ -94,11 +94,11 @@ namespace Svm::Cache {
 #endif
         auto jump_table_mem = heap->Malloc(jump_entry_size * max_index);
         auto jump_mem_rx = heap->Memory().GetRX(static_cast<u8 *>(jump_table_mem));
-        module_table = MakeUnique<ModuleTable>(&heap->Memory(), jump_mem_rx);
+        module_table = std::make_unique<ModuleTable>(&heap->Memory(), jump_mem_rx);
     }
 
     CodeBuffer CacheModule::AllocBuffer(u32 index, u32 size) {
-        SpinGuard guard(lock);
+        std::lock_guard guard(lock);
         size = AlignUp(size, 4) + 4;
         auto rw = reinterpret_cast<u8 *>(heap->Malloc(size));
         *reinterpret_cast<u32 *>(rw + size - 4) = CACHE_END_MAGIC;
@@ -122,7 +122,7 @@ namespace Svm::Cache {
     }
 
     void CacheModule::ClearBufferIndex(u32 index) {
-        SpinGuard guard(lock);
+        std::lock_guard guard(lock);
         auto buffer = module_table->GetBoundCache(index);
         if (buffer.size) {
             heap->Free(buffer.rw_data);

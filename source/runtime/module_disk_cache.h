@@ -2,23 +2,26 @@
 // Created by 甘尧 on 2022/1/26.
 //
 
-#include "types.h"
-#include "common/file.h"
-#include "virtual_arm.h"
+#include "include/types.h"
+#include "base/file.h"
+#include "include/svm_instance.h"
 #include <array>
 #include <vector>
 #include <unordered_map>
+#include <platform/unix_file.h>
 
 namespace Svm {
 
-    constexpr std::array<char, 4> MAGIC{'v', 'a', 'r', 'm'};
+    constexpr std::array<char, 4> MAGIC{'s', 'v', 'm', 'c'};
     constexpr auto CURRENT_VER = 1;
-    constexpr auto AARCH64 = 64;
+    constexpr auto X86_64 = 0;
+    constexpr auto AARCH64 = 1;
 
     struct CacheHeader {
         std::array<char, 4> magic;
         u32 version;
-        u32 arch;
+        u32 guest_arch;
+        u32 host_arch;
         u64 cache_hash;
         VAddr mapped_address;
         size_t mapped_size;
@@ -43,7 +46,7 @@ namespace Svm {
     class ModuleCache {
     public:
 
-        explicit ModuleCache(std::string cache_path);
+        explicit ModuleCache(const std::string& cache_path);
 
         bool Open();
 
@@ -57,7 +60,7 @@ namespace Svm {
 
         bool MapCache(size_t addr);
 
-        File file;
+        UnixFile file;
         CacheHeader header;
     };
 

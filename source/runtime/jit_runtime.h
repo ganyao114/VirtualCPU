@@ -52,7 +52,7 @@ namespace Svm {
             this->size = size;
         }
 
-        FORCE_INLINE void SetIR(const SharedPtr<IR::IRBlock>& ir) {
+        FORCE_INLINE void SetIR(const std::shared_ptr<IR::IRBlock>& ir) {
             this->ir_block = ir;
             state = static_cast<State>(state | GENERATED_IR);
         }
@@ -121,20 +121,20 @@ namespace Svm {
             return dispatcher_index;
         }
 
-        FORCE_INLINE SharedPtr<IR::IRBlock> GetIR() const {
+        FORCE_INLINE std::shared_ptr<IR::IRBlock> GetIR() const {
             return ir_block.lock();
         }
 
     public:
         SpinLock lock{};
-        Atomic<State> state{NONE};
+        std::atomic<State> state{NONE};
         u16 size{};
-        Atomic<u16> hotness{};
+        std::atomic<u16> hotness{};
         union {
             u32 dispatcher_index{};
             ModuleInfo module_info;
         };
-        WeakPtr<IR::IRBlock> ir_block{};
+        std::weak_ptr<IR::IRBlock> ir_block{};
     };
 
     struct BlockCacheRef {
@@ -232,7 +232,7 @@ namespace Svm {
 
         void InterpreterIRBlock(const BlockCacheRef &cache, VirtualCore *core);
 
-        SharedPtr<IR::IRBlock> NewIRBlock(VAddr base);
+        std::shared_ptr<IR::IRBlock> NewIRBlock(VAddr base);
 
         void *CodeCacheTrampoline();
 
@@ -246,36 +246,36 @@ namespace Svm {
 
         void EnsureCache(VAddr base, BasicBlock *cache);
 
-        SharedPtr<IR::IRBlock> EnsureIRBlock(const BlockCacheRef &cache, bool recursive = true);
+        std::shared_ptr<IR::IRBlock> EnsureIRBlock(const BlockCacheRef &cache, bool recursive = true);
 
-        void RecursiveIRBlock(const SharedPtr<IR::IRBlock>& ir_block);
+        void RecursiveIRBlock(const std::shared_ptr<IR::IRBlock>& ir_block);
 
         void EnsureCompiled(const BlockCacheRef &cache);
 
         void RunJitCache(CPUContext *context, void *cache);
 
-        Mutex lock;
-        UniquePtr<PageTable> page_table;
-        UniquePtr<BlockCache32> block_cache_32;
-        UniquePtr<BlockCache64> block_cache_64;
-        UniquePtr<Dispatcher> dispatcher;
-        UniquePtr<JitThread> jit_thread;
+        std::mutex lock;
+        std::unique_ptr<PageTable> page_table;
+        std::unique_ptr<BlockCache32> block_cache_32;
+        std::unique_ptr<BlockCache64> block_cache_64;
+        std::unique_ptr<Dispatcher> dispatcher;
+        std::unique_ptr<JitThread> jit_thread;
 
-        Atomic<u16> current_module_id{};
-        UniquePtr<CachePool> cache_pool{};
-        Map<VAddr, UniquePtr<CacheModule>> mapped_modules;
+        std::atomic<u16> current_module_id{};
+        std::unique_ptr<CachePool> cache_pool{};
+        std::map<VAddr, std::unique_ptr<CacheModule>> mapped_modules;
         CowVector<void*> cache_module_bases{max_cache_modules};
         LruContainer<IR::IRBlock> ir_blocks_lru{0x10000};
         SlabHeap<IR::Instruction> ir_instr_heap{0x100000};
 
         UserConfigs configs;
-        Set<VCpu*> cores;
+        std::set<VCpu*> cores;
 
         // trampolines
         CPUContext *(*run_code_trampoline)(CPUContext *);
 
         // runtime link points
-        UnorderedMap<VAddr, List<PAddr>> pending_link_points;
+        std::unordered_map<VAddr, List<PAddr>> pending_link_points;
     };
 
 }

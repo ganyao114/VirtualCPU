@@ -4,8 +4,6 @@
 
 #pragma once
 
-#define USE_STD_CPP 1
-
 #include "include/types.h"
 #include "assert.h"
 
@@ -49,94 +47,17 @@
 #define CHECK_GT(x, y) CHECK_OP(x, y, >)
 
 namespace Svm {
-#ifdef USE_STD_CPP
-
 #define ASSERT(exp) assert(exp)
 #define UNREACHABLE() abort()
 #define ABORT() abort()
-
-    using Mutex = std::mutex;
-
-    using RecursiveMutex = std::recursive_mutex;
-
-    using SharedMutex = std::shared_mutex;
-
-    using String = std::string;
-
-    using Duration = std::chrono::steady_clock::duration;
-
-    using TimePoint = std::chrono::steady_clock::time_point;
 
     using Ns = std::chrono::nanoseconds;
 
     using Ms = std::chrono::milliseconds;
 
-    template<unsigned bits>
-    using Bitset = std::bitset<bits>;
-
-    template<typename T>
-    using Queue = std::queue<T>;
-
-    template<typename T>
-    using Atomic = std::atomic<T>;
-
-    using AtomicBool = std::atomic_bool;
-
     using LockGuard = std::lock_guard<std::mutex>;
 
-    using RecursiveGuard = std::lock_guard<std::recursive_mutex>;
-
-    template<typename T = SharedMutex>
-    using UniqueLock = std::unique_lock<T>;
-
-    template<typename T = SharedMutex>
-    using SharedLock = std::shared_lock<T>;
-
-    class BaseObject : public std::enable_shared_from_this<BaseObject> {
-    };
-
-    template<typename T>
-    using SharedPtr = std::shared_ptr<T>;
-
-    template<typename T>
-    using WeakPtr = std::weak_ptr<T>;
-
-    template<typename T>
-    using UniquePtr = std::unique_ptr<T>;
-
-    template<typename T>
-    using Optional = std::optional<T>;
-
-    template<typename T1, typename T2>
-    using Pair = std::pair<T1, T2>;
-
-
-    template<typename T>
-    FORCE_INLINE std::shared_ptr<T> DynamicCast(std::shared_ptr<BaseObject> object) {
-        if (object != nullptr) {
-            return std::static_pointer_cast<T>(object);
-        }
-        return nullptr;
-    }
-
-    template<typename T, typename ...Args>
-    constexpr std::shared_ptr<T> MakeShared(Args... args) {
-        return std::make_shared<T>(std::forward<Args>(args)...);
-    }
-
-    template<typename T, typename ...Args>
-    constexpr std::unique_ptr<T> MakeUnique(Args... args) {
-        return std::make_unique<T>(std::forward<Args>(args)...);
-    }
-
-    template<typename T>
-    FORCE_INLINE std::shared_ptr<T> SharedFrom(T *raw) {
-        if (raw == nullptr)
-            return nullptr;
-        return std::static_pointer_cast<T>(raw->shared_from_this());
-    }
-
-#endif
+    class BaseObject : public std::enable_shared_from_this<BaseObject> {};
 
     template<typename T>
     struct Rect {
@@ -175,8 +96,8 @@ namespace Svm {
         }
 
     private:
-        Atomic<s64> flag{-1};
-        Atomic<int> recursive{1};
+        std::atomic<s64> flag{-1};
+        std::atomic<int> recursive{1};
     };
 
     class SpinGuard {
@@ -314,7 +235,7 @@ namespace Svm {
         return data & mask;
     }
 
-    FORCE_INLINE String BufferToString(const Vector<u8> &data) {
+    FORCE_INLINE std::string BufferToString(const std::vector<u8> &data) {
         return {data.begin(), std::find(data.begin(), data.end(), '\0')};
     }
 

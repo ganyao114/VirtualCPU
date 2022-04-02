@@ -7,7 +7,7 @@
 
 namespace Svm {
 
-    class File : public BaseObject {
+    class File {
     public:
 
         enum Mode {
@@ -32,9 +32,9 @@ namespace Svm {
 
         virtual bool Close() = 0;
 
-        virtual void Read(void *dest, size_t offset, size_t size) = 0;
+        virtual bool Read(void *dest, size_t offset, size_t size) = 0;
 
-        virtual void Write(void *src, size_t offset, size_t size) = 0;
+        virtual bool Write(void *src, size_t offset, size_t size) = 0;
 
         virtual void* Map(size_t offset, size_t size) = 0;
 

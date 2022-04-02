@@ -52,12 +52,12 @@ namespace Svm {
         }
     }
 
-    void UnixFile::Read(void *dest, size_t offset, size_t size) {
-        pread(fd_, dest, size, offset);
+    bool UnixFile::Read(void *dest, size_t offset, size_t size) {
+        return pread(fd_, dest, size, offset) > 0;
     }
 
-    void UnixFile::Write(void *src, size_t offset, size_t size) {
-        pwrite(fd_, src, size, offset);
+    bool UnixFile::Write(void *src, size_t offset, size_t size) {
+        return pwrite(fd_, src, size, offset) > 0;
     }
 
     bool UnixFile::Resize(size_t new_size) {

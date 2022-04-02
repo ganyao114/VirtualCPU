@@ -12,7 +12,7 @@ namespace Svm::Cache {
 #define HASH_TABLE_PAGE_BITS 22
 
     template<typename Addr>
-    class DispatcherTable : public BaseObject {
+    class DispatcherTable {
     public:
 
         struct Entry {
@@ -42,7 +42,7 @@ namespace Svm::Cache {
             u32 index = Hash(key);
             bool done = false;
 
-            SpinLockGuard guard(lock);
+            std::lock_guard guard(lock);
             do {
                 if (entries[index].key == 0 || entries[index].key == key) {
                     if (entries[index].key == 0) {
@@ -74,7 +74,7 @@ namespace Svm::Cache {
             VAddr entry = 0;
             VAddr c_key;
 
-            SpinLockGuard guard(lock);
+            std::lock_guard guard(lock);
             do {
                 c_key = entries[index].key;
                 if (c_key == key) {
@@ -97,7 +97,7 @@ namespace Svm::Cache {
             bool found = false;
             Addr c_key;
 
-            SpinLockGuard guard(lock);
+            std::lock_guard guard(lock);
             do {
                 c_key = entries[index].key;
                 if (c_key == key) {
@@ -110,7 +110,7 @@ namespace Svm::Cache {
         }
 
     private:
-        SpinMutex lock{};
+        std::mutex lock{};
         size_t size;
         size_t collisions = 0;
         size_t count = 0;

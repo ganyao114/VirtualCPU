@@ -2,11 +2,13 @@
 // Created by 甘尧 on 2022/1/26.
 //
 
+#include <unistd.h>
+#include <base/file.h>
 #include "module_disk_cache.h"
 
 namespace Svm {
 
-    ModuleCache::ModuleCache(std::string cache_path) : file{std::move(cache_path)} {}
+    ModuleCache::ModuleCache(const std::string& cache_path) : file{cache_path} {}
 
     bool ModuleCache::Open() {
         if (!file.Exist()) {
@@ -17,9 +19,6 @@ namespace Svm {
         }
         header = file.Read<CacheHeader>();
         if (header.magic != MAGIC) {
-            return false;
-        }
-        if (header.arch != AARCH64) {
             return false;
         }
         if (header.version != CURRENT_VER) {
@@ -62,7 +61,7 @@ namespace Svm {
         }
 
         header.magic = MAGIC;
-        header.arch = AARCH64;
+        header.host_arch = AARCH64;
         header.version = CURRENT_VER;
         header.function_table_offset = sizeof(header);
         header.code_cache_offset = header.function_table_offset + header.function_count * sizeof(FunctionEntry);

@@ -23,7 +23,7 @@ namespace Svm::Cache {
 
     private:
         SpinMutex lock;
-        UniquePtr<SimpleHeap<true>> heap;
+        std::unique_ptr<SimpleHeap<true>> heap;
     };
 
 }

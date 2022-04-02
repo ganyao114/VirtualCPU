@@ -16,20 +16,20 @@
 namespace Svm::IR {
 
     void OptimizeIR(IRBlock *block, OptResult *result) {
-        Vector<SharedPtr<IROptimize>> opts = {
-                MakeShared<ConstMemoryReadOpt>(),
-                MakeShared<ConstFoldingOpt>(),
-                MakeShared<ConstMemoryReadOpt>(),
-                MakeShared<InstrIdPass>(),
-                MakeShared<FlagsSetOpt>(),
-                MakeShared<DeadCodeRemoveOpt>(),
-                MakeShared<CtxGetSetElimination>(),
-                MakeShared<ValueExprFoldOpt>(),
-                MakeShared<InstrIdPass>(),
-                MakeShared<RegAllocatePass>(),
-                MakeShared<InstrIdClear>()
+        std::vector<std::shared_ptr<IROptimize>> opts = {
+                std::make_shared<ConstMemoryReadOpt>(),
+                std::make_shared<ConstFoldingOpt>(),
+                std::make_shared<ConstMemoryReadOpt>(),
+                std::make_shared<InstrIdPass>(),
+                std::make_shared<FlagsSetOpt>(),
+                std::make_shared<DeadCodeRemoveOpt>(),
+                std::make_shared<CtxGetSetElimination>(),
+                std::make_shared<ValueExprFoldOpt>(),
+                std::make_shared<InstrIdPass>(),
+                std::make_shared<RegAllocatePass>(),
+                std::make_shared<InstrIdClear>()
         };
-        UniqueLock<SharedMutex> guard(block->Lock());
+        std::unique_lock guard(block->Lock());
         for (auto &opt : opts) {
             opt->Optimize(block, result);
         }

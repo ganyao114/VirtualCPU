@@ -9,9 +9,9 @@
 
 namespace Svm {
 
-    SharedPtr<IR::IRBlock> GenerateBlock(JitRuntime *runtime, VAddr block_pc, CpuArch arch);
+    std::shared_ptr<IR::IRBlock> GenerateBlock(JitRuntime *runtime, VAddr block_pc, CpuArch arch);
 
-    SharedPtr<IR::IRBlock> GenerateBlockX64(JitRuntime *runtime, VAddr block_pc);
+    std::shared_ptr<IR::IRBlock> GenerateBlockX64(JitRuntime *runtime, VAddr block_pc);
 
     bool TranslateBlock(JitRuntime *runtime, IR::IRBlock *block);
 

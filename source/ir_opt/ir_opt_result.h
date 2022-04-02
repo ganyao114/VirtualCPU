@@ -29,7 +29,7 @@ namespace Svm::IR {
         virtual void MarkDirectGetHostReg(Instruction *instr, IR::VReg &reg);
     };
 
-    class OptValueFold : public BaseObject, CopyDisable {
+    class OptValueFold : public CopyDisable {
     public:
 
         struct Op {
@@ -46,11 +46,11 @@ namespace Svm::IR {
         
         virtual bool CouldFold(Instruction *dest, Instruction *src);
         
-        virtual void MarkFold(Instruction *value_src, Set<Instruction *> &dest_instr_set);
+        virtual void MarkFold(Instruction *value_src, std::set<Instruction *> &dest_instr_set);
 
         virtual Op *GetFoldOperand(Instruction *value_src);
 
-        Map<u32, Op> folded_ops{};
+        std::map<u32, Op> folded_ops{};
     };
 
     class OptConstRead : public BaseObject, CopyDisable {
@@ -58,7 +58,7 @@ namespace Svm::IR {
 
         virtual bool IsReadOnly(VAddr addr);
 
-        virtual Vector<u8> ReadMemory(VAddr addr, size_t size);
+        virtual std::vector<u8> ReadMemory(VAddr addr, size_t size);
 
         template <typename T>
         T Read(VAddr vaddr) {

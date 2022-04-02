@@ -12,8 +12,8 @@ using namespace Svm::A64;
 
 namespace Svm {
 
-    SharedPtr<IR::IRBlock> GenerateBlock(JitRuntime *runtime, VAddr block_pc, CpuArch guest_arch) {
-        SharedPtr<IR::IRBlock> res{};
+    std::shared_ptr<IR::IRBlock> GenerateBlock(JitRuntime *runtime, VAddr block_pc, CpuArch guest_arch) {
+        std::shared_ptr<IR::IRBlock> res{};
         switch (guest_arch) {
             case CpuArch::X64:
                 res = GenerateBlockX64(runtime, block_pc);
@@ -27,7 +27,7 @@ namespace Svm {
         return res;
     }
 
-    SharedPtr<IR::IRBlock> GenerateBlockX64(JitRuntime *runtime, VAddr block_pc) {
+    std::shared_ptr<IR::IRBlock> GenerateBlockX64(JitRuntime *runtime, VAddr block_pc) {
         auto ir_block = runtime->NewIRBlock(block_pc);
         IR::Assembler ir_asm{*ir_block};
         Decoder::X64Decoder decoder{block_pc, &ir_asm, &runtime->GetMemory()};

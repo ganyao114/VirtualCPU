@@ -9,15 +9,15 @@ namespace Svm::IR {
     IRBlock::IRBlock() {}
 
     IRBlock::IRBlock(VAddr pc) : start_pc(pc) {
-        instructions = MakeShared<InstrContainer>();
+        instructions = std::make_shared<InstrContainer>();
     }
 
     IRBlock::IRBlock(VAddr pc, ObjectPool<Instruction> *pool) : start_pc(pc) {
-        instructions = MakeShared<InstrContainer>(pool);
+        instructions = std::make_shared<InstrContainer>(pool);
     }
 
     IRBlock::IRBlock(VAddr pc, SlabHeap<Instruction> *heap) : start_pc(pc) {
-        instructions = MakeShared<InstrContainer>(heap);
+        instructions = std::make_shared<InstrContainer>(heap);
     }
 
     void IRBlock::AdvancePC(const IR::Imm &imm) {
@@ -75,6 +75,7 @@ namespace Svm::IR {
     }
 
     void IRBlock::RemoveInstr(Instruction *instr) {
+        instr->Destroy();
         instr_sequence.erase(*instr);
         instructions->Destroy(instr);
     }

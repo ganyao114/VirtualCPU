@@ -165,7 +165,7 @@ namespace Svm::A64 {
         bool CastHostReg(IR::VReg &reg) override;
 
         // ret index
-        Optional<u8> AllocInRegList(Vector<Map<u16, u16>> &regs, u16 define, u16 end);
+        std::optional<u8> AllocInRegList(std::vector<std::map<u16, u16>> &regs, u16 define, u16 end);
 
         const Register &ctx = REG_CTX;
         const Register &page_ptr = REG_PT;
@@ -175,13 +175,13 @@ namespace Svm::A64 {
         u32 current_ir_id{0};
         CpuArch arch;
         IR::IRBlock *block{};
-        Bitset<31> general_register_in_use;
-        Bitset<31> vector_register_in_use;
-        Vector<Map<u16, u16>> reg_live_interval;
-        Vector<Map<u16, u16>> vreg_live_interval;
-        Map<u32, const Register> registers_allocated;
-        Map<u32, const VRegister> vregisters_allocated;
-        Map<u32, Pair<u16, u16>> define_to_use_interval;
+        std::bitset<31> general_register_in_use;
+        std::bitset<31> vector_register_in_use;
+        std::vector<std::map<u16, u16>> reg_live_interval;
+        std::vector<std::map<u16, u16>> vreg_live_interval;
+        std::map<u32, const Register> registers_allocated;
+        std::map<u32, const VRegister> vregisters_allocated;
+        std::map<u32, std::pair<u16, u16>> define_to_use_interval;
     };
 
 }

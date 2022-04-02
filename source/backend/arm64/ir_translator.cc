@@ -27,7 +27,7 @@ break;
 
     IRCommitA64::IRCommitA64(IR::IRBlock *block, A64JitContext *context) : start_pc(block->StartPC()), block(block),
                                                                            context(context) {
-        opt_result = MakeUnique<A64IROptResult>(this);
+        opt_result = std::make_unique<A64IROptResult>(this);
     }
 
 
@@ -120,11 +120,11 @@ break;
         check_rsb_for_next = true;
     }
 
-    Optional<Operand> IRCommitA64::GetOperand(IR::Value &value) {
+    std::optional<Operand> IRCommitA64::GetOperand(IR::Value &value) {
         return {};
     }
 
-    Optional<MemOperand> IRCommitA64::GetMemOperand(IR::Value &value) {
+    std::optional<MemOperand> IRCommitA64::GetMemOperand(IR::Value &value) {
         if (context->EnabledMMU()) {
             // if enable mmu, we cannot merge to memory operand
             return {};
@@ -251,7 +251,7 @@ break;
         return false;
     }
 
-    void IRCommitA64::MarkFold(IR::Instruction *value_src, Set<IR::Instruction *> &dest_instr_set) {
+    void IRCommitA64::MarkFold(IR::Instruction *value_src, std::set<IR::Instruction *> &dest_instr_set) {
     }
 
     IR::OptValueFold::Op *IRCommitA64::GetFoldOperand(IR::Instruction *value_src) {
@@ -260,7 +260,7 @@ break;
 
     A64IROptResult::A64IROptResult(IRCommitA64 *commit_a64) : commit_a64(commit_a64) {
         auto runtime = commit_a64->Context()->Runtime();
-        const_read = MakeUnique<IR::OptConstReadImpl>(&runtime->GetPageTable());
+        const_read = std::make_unique<IR::OptConstReadImpl>(&runtime->GetPageTable());
     }
 
     IR::OptHostReg *A64IROptResult::GetOptHostReg() {

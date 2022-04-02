@@ -38,7 +38,7 @@ namespace Svm::IR {
         return false;
     }
 
-    void OptValueFold::MarkFold(Instruction *value_src, Set<Instruction*> &dest_instr_set) {
+    void OptValueFold::MarkFold(Instruction *value_src, std::set<Instruction*> &dest_instr_set) {
     }
 
     OptValueFold::Op *OptValueFold::GetFoldOperand(Instruction *value_src) {
@@ -49,8 +49,8 @@ namespace Svm::IR {
         return false;
     }
 
-    Vector<u8> OptConstRead::ReadMemory(VAddr addr, size_t size) {
-        return Svm::Vector<u8>();
+    std::vector<u8> OptConstRead::ReadMemory(VAddr addr, size_t size) {
+        return std::vector<u8>();
     }
 
     bool OptFlagsSync::CanSyncFlagSet(Flags &flag, Instruction *instr_flag_from) {

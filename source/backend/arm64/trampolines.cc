@@ -30,9 +30,10 @@ CPUContext *__svm_interrupt_callback_stub(CPUContext *context) {
         case Exception::FALLBACK:
             vcpu->Fallback();
             break;
-        case Exception::NONE:
-            break;
         case Exception::YIELD:
+            vcpu->Yield();
+            break;
+        default:
             break;
     }
 

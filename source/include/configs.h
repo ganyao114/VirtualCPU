@@ -18,6 +18,7 @@ namespace Svm {
         bool disk_code_cache{};
         bool rsb_cache{};
         bool accurate_memory{};
+        bool inline_dispatcher{};
         u8 page_bits{};
         u8 address_width{};
         u8 jit_threads{3};

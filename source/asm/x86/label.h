@@ -25,7 +25,6 @@ namespace Svm::X86 {
     public:
         ExternalLabel(const char *name_in, uintptr_t address_in)
                 : name_(name_in), address_(address_in) {
-            DCHECK(name_in != nullptr);
         }
 
         const char *name() const { return name_; }

@@ -14,9 +14,10 @@ namespace Svm::A64 {
         start_pc = block->StartPC();
         pc = start_pc;
         end = block->StartPC() + block->BlockSize();
-        masm.EnsureEmitFor(0x10000);
+        masm.EnsureEmitFor(0x4000);
         page_const = runtime->GetPageTableConst();
         reg_mng.Initialize(block, runtime->GuestArch());
+        inline_dispatcher = configs->inline_dispatcher;
     }
 
     void A64JitContext::Get(const CPURegister &dst, const CPURegister &src, u8 size_in_byte, bool high) {
@@ -575,7 +576,7 @@ namespace Svm::A64 {
         __ Ldp(x29, x30, MemOperand(sp, 16, PostIndex));
     }
 
-    void A64JitContext::CallFunction(u32 func_offset, const Register& ret, const Vector<const Register> &args) {
+    void A64JitContext::CallFunction(u32 func_offset, const Register& ret, const std::vector<const Register> &args) {
         CallHost::FuncType func{};
         func.func_offset = func_offset;
         func.ret_void = ret.IsValid();

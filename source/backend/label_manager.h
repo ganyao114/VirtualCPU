@@ -9,7 +9,7 @@
 namespace Svm {
 
     template <typename Label>
-    class BaseLabelManager : public BaseObject, CopyDisable {
+    class BaseLabelManager : public CopyDisable {
     public:
         
         Label *AllocLabel() {

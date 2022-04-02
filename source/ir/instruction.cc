@@ -6,7 +6,7 @@
 
 namespace Svm::IR {
 
-    Optional<u8> Instruction::GetIndex(Value &value) {
+    std::optional<u8> Instruction::GetIndex(Value &value) {
         for (u8 index = 0; index < MAX_OPERANDS; index++) {
             if (operands[index].IsValue()) {
                 if (GetParam<Value>(index).Def() == value.Def()) {
@@ -15,6 +15,13 @@ namespace Svm::IR {
             }
         }
         return {};
+    }
+
+    void Instruction::Destroy() {
+        for (auto use : uses) {
+            use->UnUse(this);
+        }
+        uses.clear();
     }
 
 }

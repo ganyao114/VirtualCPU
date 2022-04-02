@@ -13,8 +13,8 @@ namespace Svm::IR {
         return pte.Readable() && !pte.Writeable();
     }
 
-    Vector<u8> OptConstReadImpl::ReadMemory(VAddr addr, size_t size) {
-        Vector<u8> buffer(size);
+    std::vector<u8> OptConstReadImpl::ReadMemory(VAddr addr, size_t size) {
+        std::vector<u8> buffer(size);
         memory->ReadMemory(addr, buffer.data(), size);
         return std::move(buffer);
     }

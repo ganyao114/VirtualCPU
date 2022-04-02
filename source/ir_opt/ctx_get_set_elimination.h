@@ -44,10 +44,10 @@ namespace Svm::IR {
             return itr->second;
         }
 
-        Map<Instruction*, Instruction*> host_regs_versions;
-        Set<Instruction*> skip_instructions;
-        Map<u8, Instruction*> cur_reg_value;
-        Map<u8, Instruction*> cur_vreg_value;
+        std::map<Instruction*, Instruction*> host_regs_versions;
+        std::set<Instruction*> skip_instructions;
+        std::map<u8, Instruction*> cur_reg_value;
+        std::map<u8, Instruction*> cur_vreg_value;
     };
 
 }

@@ -75,7 +75,7 @@ namespace Svm::IR {
             return operands[index].Get<T>();
         }
         
-        Optional<u8> GetIndex(Value &value);
+        std::optional<u8> GetIndex(Value &value);
 
         constexpr void SetReturn(const Operand &operand) {
             ret = operand;
@@ -103,7 +103,7 @@ namespace Svm::IR {
             uses.erase(instr);
         }
 
-        constexpr Set<Instruction*> &GetUses() {
+        constexpr std::set<Instruction*> &GetUses() {
             return uses;
         }
 
@@ -140,6 +140,8 @@ namespace Svm::IR {
             return id != DISABLED_INSTR_ID;
         }
 
+        void Destroy();
+
         intrusive_node node{};
 
     private:
@@ -147,7 +149,7 @@ namespace Svm::IR {
         OpCode opcode;
         Array<Operand, MAX_OPERANDS> operands;
         Operand ret{};
-        Set<Instruction*> uses{};
+        std::set<Instruction*> uses{};
     };
 
 }

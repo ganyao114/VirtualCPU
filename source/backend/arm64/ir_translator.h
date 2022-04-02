@@ -21,9 +21,9 @@ namespace Svm::A64 {
 
         void Translate();
 
-        Optional<Operand> GetOperand(IR::Value &value);
+        std::optional<Operand> GetOperand(IR::Value &value);
 
-        Optional<MemOperand> GetMemOperand(IR::Value &value);
+        std::optional<MemOperand> GetMemOperand(IR::Value &value);
 
         void Terminal();
 
@@ -37,7 +37,7 @@ namespace Svm::A64 {
 
         bool CouldFold(IR::Instruction *dest, IR::Instruction *src) override;
 
-        void MarkFold(IR::Instruction *value_src, Set<IR::Instruction *> &dest_instr_set) override;
+        void MarkFold(IR::Instruction *value_src, std::set<IR::Instruction *> &dest_instr_set) override;
 
         Op *GetFoldOperand(IR::Instruction *value_src) override;
 
@@ -84,9 +84,9 @@ private:
         u32 block_offset{};
         IR::Instruction *current{};
         IR::IRBlock *block{};
-        UniquePtr<IR::OptResult> opt_result{};
+        std::unique_ptr<IR::OptResult> opt_result{};
         A64JitContext *context{};
-        Map<u32, Label*> labels{};
+        std::map<u32, Label*> labels{};
 
         bool check_rsb_for_next{};
     };
@@ -108,7 +108,7 @@ private:
 
     private:
         IRCommitA64 *commit_a64{};
-        UniquePtr<IR::OptConstRead> const_read{};
+        std::unique_ptr<IR::OptConstRead> const_read{};
     };
 
 }

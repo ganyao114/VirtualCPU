@@ -12,7 +12,7 @@ namespace Svm {
     template<typename T>
     struct LruWrapper {
         intrusive_node node{};
-        SharedPtr<T> value{};
+        std::shared_ptr<T> value{};
     };
 
     template<typename T>
@@ -26,9 +26,9 @@ namespace Svm {
         explicit LruContainer(size_t max) : max_size(max) {}
 
         template <typename ...Args>
-        SharedPtr<T> New(Args... args) {
-            auto res = MakeShared<T>(std::forward<Args>(args)...);
-            RecursiveGuard guard(lock);
+        std::shared_ptr<T> New(Args... args) {
+            auto res = std::make_shared<T>(std::forward<Args>(args)...);
+            std::lock_guard guard(lock);
             auto wrapper = new LruWrapper<T>();
             wrapper->value = res;
             res->lru_owner = wrapper;
@@ -42,7 +42,7 @@ namespace Svm {
         void Delete(T *node) {
             LruWrapper<T> *wrapper;
             {
-                RecursiveGuard guard(lock);
+                std::lock_guard guard(lock);
                 if (node->lru_owner) {
                     container.erase(*node->lru_owner);
                     wrapper = node->lru_owner;
@@ -53,7 +53,7 @@ namespace Svm {
         }
 
         void Notify(T *node) {
-            RecursiveGuard guard(lock);
+            std::lock_guard guard(lock);
             if (node->lru_owner) {
                 container.erase(*node->lru_owner);
                 container.push_front(*node->lru_owner);
@@ -61,7 +61,7 @@ namespace Svm {
         }
 
     private:
-        RecursiveMutex lock;
+        std::recursive_mutex lock;
         intrusive_list<LruWrapper<T>, &LruWrapper<T>::node> container;
         size_t max_size;
     };

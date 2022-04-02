@@ -31,7 +31,7 @@ namespace Svm::Cache {
         CowVector<u8, true> *memory;
     };
 
-    class CacheModule : public BaseObject {
+    class CacheModule {
     public:
 
         struct SlowBuffer {
@@ -65,11 +65,11 @@ namespace Svm::Cache {
 
     private:
         u16 id;
-        SpinMutex lock;
-        UniquePtr<ModuleTable> module_table;
-        UniquePtr<SimpleHeap<true>> heap;
+        std::mutex lock{};
+        std::unique_ptr<ModuleTable> module_table;
+        std::unique_ptr<SimpleHeap<true>> heap;
         u8 *to_stub_cache;
-        Atomic<u32> current_index{};
+        std::atomic<u32> current_index{};
         u32 max_index;
         VAddr module_base;
         u32 size;

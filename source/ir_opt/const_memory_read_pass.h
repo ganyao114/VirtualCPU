@@ -17,7 +17,7 @@ namespace Svm::IR {
 
         bool IsReadOnly(VAddr addr) override;
 
-        Vector<u8> ReadMemory(VAddr addr, size_t size) override;
+        std::vector<u8> ReadMemory(VAddr addr, size_t size) override;
 
     private:
         BasePageTable *memory{};

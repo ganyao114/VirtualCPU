@@ -7,8 +7,8 @@
 namespace Svm::IR {
 
     void FlagsSetOpt::Optimize(IRBlock *block, OptResult *result) {
-        Map<u32, Set<u32>> flags_set_positions{};
-        Map<u32, Set<u32>> flags_get_positions{};
+        std::map<u32, std::set<u32>> flags_set_positions{};
+        std::map<u32, std::set<u32>> flags_get_positions{};
 
         auto append_flag_sets = [&flags_set_positions] (u32 flag, u32 instr_id) {
             flags_set_positions[flag].emplace(instr_id);
@@ -39,7 +39,7 @@ namespace Svm::IR {
 
         for (auto &[flag, set_positions] : flags_set_positions) {
             auto itr = flags_get_positions.find(flag);
-            Set<u32> keep_sets{};
+            std::set<u32> keep_sets{};
             if (itr != flags_get_positions.end()) {
                 auto &get_positions = itr->second;
                 for (auto get_position : get_positions) {

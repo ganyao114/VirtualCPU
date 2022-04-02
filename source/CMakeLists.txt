@@ -29,8 +29,8 @@ set(SOURCES
         ir/block.cc
         ir/assembler.cc
         ir/interpreter.cc
-        ast/block.cc
-        ast/functions.cc
+        function/block.cc
+        function/functions.cc
         frontend/x64/decoder.cc
         frontend/x64/jit_visitor.cc
 #        frontend/function_disam.cc
@@ -47,6 +47,7 @@ set(SOURCES
         ir_opt/ir_opt_manager.cc
         ir_opt/instruction_id_pass.cc
         ir_opt/instruction_id_clear.cc
+        ir_opt/context_promotion_pass.cc
         platform/memory.cc
         platform/unix_file.cc
         runtime/jit_runtime.cc
@@ -54,6 +55,7 @@ set(SOURCES
         runtime/jit_thread.cc
         runtime/instance.cc
         runtime/vcpu.cc
+#        runtime/module_disk_cache.cc
         cache/cache_module.cc
         cache/cache_pool.cc
 

@@ -26,8 +26,8 @@ namespace Svm {
 
         const int thread_count;
 
-        AtomicBool running{true};
-        Vector<std::thread> threads;
+        std::atomic_bool running{true};
+        std::vector<std::thread> threads;
         BlockingQueue<Task> queue;
     };
 

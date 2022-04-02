@@ -49,14 +49,14 @@ namespace Svm::Cache {
         T *Emplace(Addr addr, Args... args) {
             {
                 // fast path
-                SharedLock<SharedMutex> guard(lock);
+                std::shared_lock guard(lock);
                 auto itr = search_cache.find(addr);
                 if (itr != search_cache.end()) {
                     return itr->second;
                 }
             }
             {
-                UniqueLock<SharedMutex> guard(lock);
+                std::unique_lock guard(lock);
                 auto itr = search_cache.find(addr);
                 if (itr != search_cache.end()) {
                     return itr->second;
@@ -71,7 +71,7 @@ namespace Svm::Cache {
 
         void Flush(Addr addr, T *entry) {
             if (static_cache) return;
-            UniqueLock<SharedMutex> guard(lock);
+            std::unique_lock guard(lock);
             const Addr cache_end = (addr + entry->size + cache_size - 1) >> cache_line;
             for (Addr line = addr >> cache_line; line < cache_end; ++line) {
                 s16 offset = addr - (line << cache_line);
@@ -80,7 +80,7 @@ namespace Svm::Cache {
         }
 
         void InvalidByCacheLine(Addr addr, size_t size) {
-            UniqueLock<SharedMutex> guard(lock);
+            std::unique_lock guard(lock);
             const Addr cache_end = (addr + size + cache_size - 1) >> cache_line;
             for (Addr line = addr >> cache_line; line < cache_end; ++line) {
                 auto itr = invalid_cache.find(line);
@@ -95,7 +95,7 @@ namespace Svm::Cache {
         }
 
         void RemoveByCacheLine(Addr addr, size_t size) {
-            UniqueLock<SharedMutex> guard(lock);
+            std::unique_lock guard(lock);
             const Addr cache_end = (addr + size + cache_size - 1) >> cache_line;
             for (Addr line = addr >> cache_line; line < cache_end; ++line) {
                 auto itr = invalid_cache.find(line);
@@ -128,12 +128,12 @@ namespace Svm::Cache {
             allocator.Free(entry);
         }
 
-        UnorderedMap<Addr, T*> search_cache{};
-        UnorderedMap<Addr, Vector<CacheLine>> invalid_cache{};
+        std::unordered_map<Addr, T*> search_cache{};
+        std::unordered_map<Addr, std::vector<CacheLine>> invalid_cache{};
         Allocator allocator{};
 
         const bool static_cache{};
-        SharedMutex lock;
+        std::shared_mutex lock;
     };
 
 }

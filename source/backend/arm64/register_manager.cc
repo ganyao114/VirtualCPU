@@ -164,7 +164,7 @@ namespace Svm::A64 {
         }
     }
 
-    Optional<u8> RegisterManager::AllocInRegList(Vector<Map<u16, u16>> &regs, u16 define, u16 end) {
+    std::optional<u8> RegisterManager::AllocInRegList(std::vector<std::map<u16, u16>> &regs, u16 define, u16 end) {
         for (auto index = 0; index < regs.size(); ++index) {
             auto &intervals = regs[index];
             if (intervals.empty()) {
@@ -182,8 +182,8 @@ namespace Svm::A64 {
     }
 
     const Register &RegisterManager::AcquireTmpX() {
-        s8 index = -1;
-        for (u8 i = reg_live_interval.size() - 1; i > 0; --i) {
+        int index = -1;
+        for (int i = reg_live_interval.size() - 1; i > 0; --i) {
             if (general_register_in_use[i]) {
                 continue;
             }
@@ -216,8 +216,8 @@ namespace Svm::A64 {
     }
 
     const VRegister &RegisterManager::AcquireTmpV() {
-        s8 index = -1;
-        for (u8 i = reg_live_interval.size() - 1; i > 0; --i) {
+        int index = -1;
+        for (int i = reg_live_interval.size() - 1; i > 0; --i) {
             if (vector_register_in_use[i]) {
                 continue;
             }

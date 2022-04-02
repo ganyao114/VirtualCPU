@@ -18,17 +18,17 @@ constexpr auto jit_hotness = 0x20;
 namespace Svm {
 
     JitRuntime::JitRuntime(UserConfigs &configs) : configs(configs) {
-        dispatcher = MakeUnique<Dispatcher>();
-        cache_pool = MakeUnique<CachePool>(max_code_cache);
-        jit_thread = MakeUnique<JitThread>(configs.jit_threads);
+        dispatcher = std::make_unique<Dispatcher>();
+        cache_pool = std::make_unique<CachePool>(max_code_cache);
+        jit_thread = std::make_unique<JitThread>(configs.jit_threads);
         if (!configs.use_offset_pt) {
-            page_table = MakeUnique<FlatPageTable>(configs.address_width, configs.page_bits);
+            page_table = std::make_unique<FlatPageTable>(configs.address_width, configs.page_bits);
             page_table->Initialize();
         }
         if (Guest64Bit()) {
-            block_cache_64 = MakeUnique<BlockCache64>(configs.static_code);
+            block_cache_64 = std::make_unique<BlockCache64>(configs.static_code);
         } else {
-            block_cache_32 = MakeUnique<BlockCache32>(configs.static_code);
+            block_cache_32 = std::make_unique<BlockCache32>(configs.static_code);
         }
         switch (configs.guest_arch) {
             case CpuArch::X64:
@@ -132,7 +132,7 @@ namespace Svm {
         return {addr, cache};
     }
 
-    SharedPtr<IR::IRBlock> JitRuntime::NewIRBlock(VAddr base) {
+    std::shared_ptr<IR::IRBlock> JitRuntime::NewIRBlock(VAddr base) {
         return ir_blocks_lru.New(base, &ir_instr_heap);
     }
 
@@ -169,7 +169,7 @@ namespace Svm {
         }
     }
 
-    SharedPtr<IR::IRBlock> JitRuntime::EnsureIRBlock(const BlockCacheRef &cache, bool recursive) {
+    std::shared_ptr<IR::IRBlock> JitRuntime::EnsureIRBlock(const BlockCacheRef &cache, bool recursive) {
         auto ir = cache.block->GetIR();
         if (ir) {
             ir_blocks_lru.Notify(ir.get());
@@ -241,7 +241,7 @@ namespace Svm {
         ASSERT(ir_block);
 
         {
-            SharedLock<SharedMutex> guard(ir_block->Lock());
+            std::shared_lock guard(ir_block->Lock());
             // prepare interp stack
             auto reg_size = ir_block->Sequence().size();
             void *interp_stack{};
@@ -259,12 +259,12 @@ namespace Svm {
     }
 
     void JitRuntime::RunJitCache(CPUContext *context, void *cache) {
-//        context->Helper().code_cache = cache;
+        context->Helper().code_cache = cache;
         context->Helper().halt_flag = false;
         run_code_trampoline(context);
     }
 
-    void JitRuntime::RecursiveIRBlock(const SharedPtr<IR::IRBlock>& ir_block) {
+    void JitRuntime::RecursiveIRBlock(const std::shared_ptr<IR::IRBlock>& ir_block) {
         auto next_blocks = ir_block->NextBlocksAddress(true);
         for (auto block : next_blocks) {
             PushBlock(block, false);

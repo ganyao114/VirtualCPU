@@ -114,7 +114,7 @@ namespace Svm::A64 {
         mutable List<Register> tmps;
     };
 
-    class A64JitContext : public BaseObject, CopyDisable {
+    class A64JitContext : public CopyDisable {
     public:
 
         explicit A64JitContext(IR::IRBlock *ir_block, Runtime *runtime, MacroAssembler &masm);
@@ -168,7 +168,7 @@ namespace Svm::A64 {
 
         void Forward(const Register &va, bool check_rsb = false);
 
-        void CallFunction(u32 func_offset, const Register& ret, const Vector<const Register> &args);
+        void CallFunction(u32 func_offset, const Register& ret, const std::vector<const Register> &args);
 
         void RaiseException(Exception::Action action, VAddr pc, const Register& data = NoReg);
 

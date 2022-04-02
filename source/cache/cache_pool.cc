@@ -7,7 +7,7 @@
 namespace Svm::Cache {
 
     CachePool::CachePool(u32 max_size) {
-        heap = MakeUnique<SimpleHeap<true>>(max_size);
+        heap = std::make_unique<SimpleHeap<true>>(max_size);
     }
 
     CodeBuffer CachePool::Alloc(u32 size) {

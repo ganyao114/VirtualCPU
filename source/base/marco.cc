@@ -10,8 +10,6 @@ namespace Svm {
         return reinterpret_cast<s64>(pthread_self());
     }
 
-#ifdef USE_STD_CPP
-
 #include <unistd.h>
 
     void SpinMutex::Lock() {
@@ -54,8 +52,6 @@ namespace Svm {
     bool SpinMutex::LastRecursive() {
         return LockedBySelf() && recursive == 1;
     }
-
-#endif
 
     SpinLockGuard::SpinLockGuard(SpinMutex &mutex) : mutex_(mutex) {
         mutex_.Lock();

@@ -254,7 +254,7 @@ namespace Svm::IR {
             return instr_sequence;
         }
 
-        constexpr SharedPtr<InstrContainer> &Instructions() {
+        constexpr std::shared_ptr<InstrContainer> &Instructions() {
             return instructions;
         }
 
@@ -270,7 +270,7 @@ namespace Svm::IR {
             return pc >= start_pc && pc < (start_pc + current_offset);
         }
 
-        constexpr SharedMutex &Lock() {
+        constexpr std::shared_mutex &Lock() {
             return lock;
         }
 
@@ -302,9 +302,9 @@ namespace Svm::IR {
 
         VAddr start_pc{};
         u32 current_offset{0};
-        SharedPtr<InstrContainer> instructions;
-        UnorderedMap<IR::Label*, Set<Instruction*>> pending_labels;
-        Vector<Instruction*> instr_indexes;
+        std::shared_ptr<InstrContainer> instructions;
+        std::unordered_map<IR::Label*, std::set<Instruction*>> pending_labels;
+        std::vector<Instruction*> instr_indexes;
         InstrSequence instr_sequence;
         Instruction terminal_instr{TERMINAL_INSTR_ID, OpCode::Terminal};
         union {
@@ -316,7 +316,7 @@ namespace Svm::IR {
         TerminalType terminal_type;
         TerminalReason terminal_reason{BRANCH};
         bool need_check_halt{false};
-        SharedMutex lock{};
+        std::shared_mutex lock{};
     };
 
 }
